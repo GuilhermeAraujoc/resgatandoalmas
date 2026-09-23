@@ -32,7 +32,7 @@ const navigation: {
   { route: "profile", label: "Perfil", icon: "user", mobile: "Perfil" },
 ];
 export function Layout({ children }: { children: ReactNode }) {
-  const { state, route, openModal, notify } = useApp();
+  const { state, route, openModal, notify, logout } = useApp();
   const initials = state.profile.name
     .trim()
     .split(/\s+/)
@@ -64,7 +64,13 @@ export function Layout({ children }: { children: ReactNode }) {
             pequenos cuidados de hoje.
           </div>
           <nav className="nav">
-            <a href="#login">
+            <a
+              href="#login"
+              onClick={(event) => {
+                event.preventDefault();
+                void logout();
+              }}
+            >
               <Icon name="logout" />
               Sair
             </a>

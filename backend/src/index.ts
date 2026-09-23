@@ -1,15 +1,13 @@
-import Express = require("express");
+import { app } from "./app.js";
+import { env } from "./config/env.js";
+import { prisma } from "./lib/prisma.js";
 
-const app = Express();
-
-app.use(Express.json());
-
-app.get("/api", (req, res) => {
-    res.json({
-        message: "API Resgatando Almas funcionando!"
-    });
+const server = app.listen(env.PORT, () => {
+  console.log(`Backend rodando na porta ${env.PORT}`);
 });
 
-app.listen(3001, () => {
-    console.log("Backend rodando na porta 3001");
-});
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => {
+    server.close(() => void prisma.$disconnect().finally(() => process.exit(0)));
+  });
+}

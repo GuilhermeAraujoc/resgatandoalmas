@@ -1,8 +1,9 @@
-import { useEffect, useRef, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Field, Notice } from "./ui";
 import { config } from "../config";
 import type { ModalKind } from "../types";
+import { errorMessage } from "../services/api";
 const titles: Record<ModalKind, string> = {
   whatsapp: "Atendimento pelo WhatsApp",
   schedule: "Agendar atendimento",
@@ -14,7 +15,8 @@ const titles: Record<ModalKind, string> = {
   sample: "Um momento para você",
 };
 export function ModalHost() {
-  const { modal, closeModal, dispatch, navigate, notify } = useApp();
+  const { modal, closeModal, notify, deleteAccount } = useApp();
+  const [deleting, setDeleting] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (modal) ref.current?.showModal();
@@ -108,10 +110,10 @@ export function ModalHost() {
             profissionais de saúde.
           </p>
           <p className="muted">
-            Utilize apenas informações fictícias. Os formulários funcionam nesta
-            sessão; não há cadastro real, armazenamento de CPF ou senha, nem
-            análise real por IA. O player incorporado é fornecido pelo YouTube e
-            está sujeito às políticas desse serviço.
+            Seus dados de cadastro, avaliações e feedbacks são armazenados para
+            acompanhar sua evolução. A senha é guardada apenas de forma
+            protegida, e não há análise real por IA. O player incorporado é
+            fornecido pelo YouTube e está sujeito às políticas desse serviço.
           </p>
           <Notice>
             Documento demonstrativo. Termos e política definitivos devem ser
@@ -142,7 +144,8 @@ export function ModalHost() {
       {modal === "delete" && (
         <div className="stack">
           <p className="muted">
-            Isso encerra a sessão de demonstração e reinicia os dados exibidos.
+            Sua conta e todos os seus registros serão excluídos. Esta ação não
+            pode ser desfeita.
           </p>
           <div className="between">
             <Button variant="outline" icon={false} onClick={closeModal}>
@@ -151,11 +154,18 @@ export function ModalHost() {
             <Button
               variant="danger"
               icon={false}
-              onClick={() => {
-                dispatch({ type: "reset" });
-                closeModal();
-                navigate("login");
-                notify("Sessão de demonstração reiniciada.");
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true);
+                try {
+                  await deleteAccount();
+                  closeModal();
+                  notify("Sua conta foi excluída.");
+                } catch (error) {
+                  notify(errorMessage(error));
+                } finally {
+                  setDeleting(false);
+                }
               }}
             >
               Excluir e sair

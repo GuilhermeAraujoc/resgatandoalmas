@@ -50,12 +50,14 @@ function Screen() {
   }
 }
 function AppContent() {
-  const { route, toast } = useApp();
+  const { route, toast, authStatus } = useApp();
   const auth = route === "login" || route === "signup";
+  // Protected screens wait for the session check (anonymous users are redirected to login).
+  const ready = auth || authStatus === "authenticated";
   return (
     <>
       <div className="ambient" aria-hidden="true" />
-      {auth ? (
+      {!ready ? null : auth ? (
         <Screen />
       ) : (
         <Layout>

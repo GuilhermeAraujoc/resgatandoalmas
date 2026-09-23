@@ -1,32 +1,46 @@
 import { useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, Logo } from "../components/ui";
+import { errorMessage } from "../services/api";
 export function Auth({ signup = false }: { signup?: boolean }) {
-  const { state, dispatch, navigate, openModal } = useApp();
+  const { login, register, navigate, openModal } = useApp();
   const [error, setError] = useState("");
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const [pending, setPending] = useState(false);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    if (signup && data.get("password") !== data.get("confirm")) {
+    const text = (key: string) => String(data.get(key) ?? "");
+    if (signup && text("password") !== text("confirm")) {
       setError("As senhas não coincidem. Confira e tente novamente.");
       return;
     }
-    const name = signup
-      ? String(data.get("name") ?? "").trim()
-      : state.profile.name;
-    if (!name) {
+    if (signup && !text("name").trim()) {
       setError("Informe seu nome.");
       return;
     }
-    dispatch({
-      type: "profile",
-      profile: {
-        ...state.profile,
-        name,
-        email: String(data.get("email") ?? ""),
-      },
-    });
-    navigate("welcome");
+    setError("");
+    setPending(true);
+    try {
+      if (signup)
+        await register({
+          name: text("name").trim(),
+          cpf: text("cpf"),
+          email: text("email"),
+          password: text("password"),
+          acceptedTerms: data.get("terms") === "on",
+        });
+      else
+        await login({
+          email: text("email"),
+          password: text("password"),
+          remember: data.get("remember") === "on",
+        });
+      navigate("welcome");
+    } catch (failure) {
+      setError(errorMessage(failure));
+    } finally {
+      setPending(false);
+    }
   };
   return (
     <div className="auth">
@@ -113,7 +127,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                   />
                 </Field>
                 <label className="check">
-                  <input type="checkbox" required />
+                  <input name="terms" type="checkbox" required />
                   Li e concordo com os Termos de Uso e Política de Privacidade.
                 </label>
                 <div className="legal-links">
@@ -128,7 +142,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             ) : (
               <div className="between">
                 <label className="check">
-                  <input type="checkbox" />
+                  <input name="remember" type="checkbox" />
                   Lembrar de mim
                 </label>
                 <button
@@ -145,7 +159,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 {error}
               </p>
             )}
-            <Button type="submit" full>
+            <Button type="submit" full disabled={pending}>
               {signup ? "Criar minha conta" : "Entrar"}
             </Button>
           </form>
@@ -156,13 +170,10 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             </a>
           </div>
           <p className="footer-note">
-            Acesso simulado. Use dados fictícios.
+            Sua senha é armazenada de forma protegida.
             <br />
-            Nenhuma senha ou CPF é armazenado.
+            Nunca a compartilhe com outras pessoas.
           </p>
-          <a className="textlink" href="#home">
-            Explorar demonstração <Icon name="arrow" />
-          </a>
         </div>
       </section>
     </div>

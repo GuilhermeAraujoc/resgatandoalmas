@@ -1,0 +1,162 @@
+// Entities are modeled after what the frontend screens display or collect.
+// See CLAUDE.md for the screen → column mapping.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Protocol track. Assessment score > 80 selects CALM, otherwise VITALITY.
+enum Scenario {
+  VITALITY
+  CALM
+}
+
+/// "Muito baixo" … "Muito alto" (assessment answers and feedback energy).
+enum EnergyLevel {
+  MUITO_BAIXO
+  BAIXO
+  MEDIO
+  ALTO
+  MUITO_ALTO
+}
+
+/// "Como você se sentiu durante o exercício?"
+enum Feeling {
+  MUITO_DESCONFORTAVEL
+  DESCONFORTAVEL
+  NEUTRO
+  BEM
+  MUITO_BEM
+}
+
+/// "O exercício foi fácil de realizar?"
+enum Ease {
+  MUITO_DIFICIL
+  DIFICIL
+  NORMAL
+  FACIL
+  MUITO_FACIL
+}
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  /// Digits only.
+  cpf             String    @unique @db.Char(11)
+  email           String    @unique
+  passwordHash    String
+  /// Digits only.
+  phone           String?
+  birthDate       DateTime? @db.Date
+  termsAcceptedAt DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions    Session[]
+  assessments Assessment[]
+  activities  UserActivity[]
+  feedbacks   Feedback[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  /// SHA-256 of the opaque token stored in the cookie; the raw token is never persisted.
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Exercise catalog. Ids match frontend/src/data/catalog.ts.
+model Activity {
+  id              String    @id
+  name            String
+  category        String
+  description     String
+  durationMinutes Int
+  steps           String[]
+  icon            String
+  color           String?
+  videoId         String
+  /// null = complementary practice (library only, not part of a protocol).
+  scenario        Scenario?
+  protocolOrder   Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  completions UserActivity[]
+
+  @@unique([scenario, protocolOrder])
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  userId      String
+  /// 0–100, computed server-side from the answers.
+  energyScore Int
+  scenario    Scenario
+  createdAt   DateTime @default(now())
+
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers AssessmentAnswer[]
+
+  @@index([userId, createdAt])
+}
+
+model AssessmentAnswer {
+  id            String      @id @default(uuid())
+  assessmentId  String
+  /// Position in the fixed questionnaire (0-based).
+  questionIndex Int
+  level         EnergyLevel
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, questionIndex])
+}
+
+/// An activity completed by a user.
+model UserActivity {
+  id          String   @id @default(uuid())
+  userId      String
+  activityId  String
+  completedAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity  @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  feedback Feedback?
+
+  @@index([userId, completedAt])
+  @@index([activityId])
+}
+
+model Feedback {
+  id             String      @id @default(uuid())
+  userId         String
+  userActivityId String      @unique
+  energyLevel    EnergyLevel
+  feeling        Feeling
+  ease           Ease
+  hadDiscomfort  Boolean
+  note           String?
+  /// Energy value (0–100) of the user's latest record before this feedback; null if there was none.
+  energyBefore   Int?
+  createdAt      DateTime    @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userActivity UserActivity @relation(fields: [userActivityId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

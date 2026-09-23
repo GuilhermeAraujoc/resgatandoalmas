@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useApp } from "../state/AppContext";
+import { errorMessage } from "../services/api";
 import {
   energyLabel,
   energyLevels,
@@ -43,7 +45,8 @@ const groups: { key: FeedbackKey; question: string; options: string[] }[] = [
   },
 ];
 export function Feedback() {
-  const { state, dispatch, navigate } = useApp();
+  const { state, dispatch, navigate, notify, submitFeedback } = useApp();
+  const [pending, setPending] = useState(false);
   return (
     <div className="narrow">
       <Card>
@@ -98,13 +101,16 @@ export function Feedback() {
         <Button
           full
           style={{ marginTop: 25 }}
-          disabled={!isFeedbackComplete(state.feedback)}
-          onClick={() => {
-            dispatch({
-              type: "submit-feedback",
-              date: new Date().toISOString(),
-            });
-            navigate("feedback-result");
+          disabled={!isFeedbackComplete(state.feedback) || pending}
+          onClick={async () => {
+            setPending(true);
+            try {
+              await submitFeedback();
+              navigate("feedback-result");
+            } catch (error) {
+              notify(errorMessage(error));
+              setPending(false);
+            }
           }}
         >
           Enviar feedback

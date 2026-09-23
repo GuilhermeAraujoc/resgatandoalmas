@@ -14,16 +14,22 @@ export function Progress() {
   const assessments = state.history.filter(
     (record) => record.kind === "assessment",
   );
+  const { summary } = state;
   const stats = [
     ["Energia atual", energyLabel(state.energy), "Seu último registro"],
     ["Evolução", "Em acompanhamento", "Observe como você se sente"],
     [
       "Exercícios realizados",
-      String(9 + state.completed.length),
+      String(summary.totalCompleted),
       "Momentos de autocuidado",
     ],
-    ["Sequência", "5 dias", "Um passo de cada vez"],
+    [
+      "Sequência",
+      `${summary.streakDays} ${summary.streakDays === 1 ? "dia" : "dias"}`,
+      "Um passo de cada vez",
+    ],
   ];
+  const weekGoal = 7;
   return (
     <>
       <PageHeader
@@ -44,7 +50,7 @@ export function Progress() {
           <h2>Evolução do nível de energia</h2>
           <Badge>Esta semana</Badge>
         </div>
-        <EnergyChart value={state.energy} />
+        <EnergyChart value={state.energy} values={state.weeklyEnergy} />
         <p className="small muted">
           Eixo horizontal: dias da semana. Eixo vertical: índice ilustrativo de
           0 a 100, organizado a partir dos relatos de bem-estar. Não representa
@@ -57,6 +63,11 @@ export function Progress() {
       <div className="grid two" style={{ marginTop: 22 }}>
         <Card>
           <h3>Histórico de avaliações</h3>
+          {assessments.length === 0 && (
+            <p className="muted small" style={{ marginTop: 18 }}>
+              Nenhuma avaliação registrada ainda.
+            </p>
+          )}
           <div className="timeline" style={{ marginTop: 25 }}>
             {[...assessments].reverse().map((record) => (
               <div key={record.id}>
@@ -83,12 +94,15 @@ export function Progress() {
               margin: "25px 0",
             }}
           >
-            5{" "}
+            {summary.completedThisWeek}{" "}
             <span className="muted" style={{ fontSize: 20, fontWeight: 400 }}>
-              de 7
+              de {weekGoal}
             </span>
           </strong>
-          <ProgressBar value={(5 / 7) * 100} label="Exercícios da semana" />
+          <ProgressBar
+            value={(summary.completedThisWeek / weekGoal) * 100}
+            label="Exercícios da semana"
+          />
           <p className="muted small" style={{ margin: "18px 0" }}>
             Valorize cada momento que você reservou para si.
           </p>
