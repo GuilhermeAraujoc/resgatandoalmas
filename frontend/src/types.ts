@@ -69,9 +69,9 @@ export interface ProgressSummary {
 }
 export interface AppState {
   profile: Profile;
-  energy: number;
-  before: number;
-  scenario: Scenario;
+  energy: number | null;
+  before: number | null;
+  scenario: Scenario | null;
   answers: (number | null)[];
   question: number;
   completed: string[];

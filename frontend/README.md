@@ -1,32 +1,81 @@
-# React + TypeScript + Vite
+# Frontend — Resgatando Almas
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interface React integrada ao backend Express deste repositório. Perfil, energia,
+histórico e progresso vêm da API. Uma conta sem avaliação tem energia e protocolo
+nulos: a interface mostra estados vazios, sem atribuir valores fictícios.
 
-Currently, two official plugins are available:
+## Executar e verificar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Na raiz do projeto: `docker compose up --build`.
 
-## React Compiler
+No diretório frontend:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+npm test
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Login: `http://localhost:5173/#login`.
+
+## API e sessão
+
+O endereço padrão é `/api`, encaminhado pelo proxy do Vite ao backend.
+`API_PROXY_TARGET` configura o destino do proxy (padrão `http://localhost:3001`;
+no Docker Compose, `http://backend:3001`).
+
+`VITE_API_URL` pode substituir a URL pública da API, conforme `.env.example`.
+Nunca coloque credenciais do banco ou segredos nessa variável. Para usar uma origem
+diferente, o backend precisa configurar CORS com credenciais; a configuração atual
+usa o proxy de mesma origem. Em produção, configure também o proxy `/api`.
+
+A autenticação usa o cookie HttpOnly do backend. Requisições enviam credenciais,
+tratam erros HTTP e de rede e têm limite de 15 segundos. Mensagens de sucesso só
+aparecem após resposta da API.
+
+## Rotas integradas
+
+| Método e caminho | Dados enviados | Resposta |
+| --- | --- | --- |
+| `POST /api/auth/register` | `{ name, cpf, email, password, acceptedTerms }` | `{ user }` e cookie |
+| `POST /api/auth/login` | `{ email, password, remember }` | `{ user }` e cookie |
+| `POST /api/auth/logout` | — | `204` |
+| `GET /api/me` | — | `{ user }` |
+| `PATCH /api/me` | `{ name, email, cpf, phone, birthDate }` | `{ user }` |
+| `DELETE /api/me` | — | `204` |
+| `GET /api/me/progress` | — | `ProgressDto` |
+| `POST /api/assessments` | `{ answers }` com os enums de energia | `{ assessment }` |
+| `POST /api/feedbacks` | `{ activityId, energyLevel, feeling, ease, hadDiscomfort, note }` | `{ feedback }` |
+
+Os formatos completos estão em `src/services/dto.ts`; os módulos em `src/services/`
+convertem as opções dos formulários para os enums do backend. Datas de nascimento
+usam `YYYY-MM-DD`; o histórico usa datas ISO 8601. O servidor calcula pontuações e
+progresso e identifica o usuário pela sessão.
+
+**O contrato final usa `/api/me` e `/api/me/progress`, não `/api/me/state`.**
+Essa escolha preserva a integração implementada na main ao unir a branch guilherme.
+
+## Funcionalidades ainda pendentes no backend
+
+Os formulários estão preparados para enviar estas solicitações, mas as rotas ainda
+não existem em `backend/src/routes/index.ts`:
+
+- `POST /api/auth/forgot-password`: `{ email }`.
+- `POST /api/auth/change-password`: `{ currentPassword, newPassword }`.
+- `POST /api/appointments`: `{ date, time, note }`.
+
+Essas operações mostram erro se o servidor não atender; não simulam sucesso.
+
+## Conteúdo local
+
+Perguntas e catálogo de exercícios permanecem em `src/data/catalog.ts`. Os IDs
+precisam corresponder ao catálogo do backend. Os vídeos de exemplo foram removidos;
+preencha os `videoId` com os vídeos oficiais. O WhatsApp fica em `src/config.tsx`.
+Termos e política aguardam conteúdo definitivo. O Design System mantém amostras
+visuais isoladas; os gráficos das telas de usuário recebem o histórico da API.
+
+`npm test` verifica ausência de dados fictícios, mapeamento do progresso do backend,
+limpeza de estado, requisições autenticadas e tratamento de erros com respostas
+controladas apenas nos testes.

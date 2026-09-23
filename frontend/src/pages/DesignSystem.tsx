@@ -97,7 +97,7 @@ export function DesignSystem() {
         </Card>
         <Card>
           <h2>Gráficos</h2>
-          <EnergyChart value={55} />
+          <EnergyChart />
         </Card>
       </div>
       <div style={{ marginTop: 22 }}>

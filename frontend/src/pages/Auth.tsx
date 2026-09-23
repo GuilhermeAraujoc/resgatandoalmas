@@ -99,7 +99,6 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 type="email"
                 autoComplete="email"
                 placeholder="seu@email.com"
-                defaultValue={signup ? "" : "mariana@exemplo.com"}
                 required
               />
             </Field>
@@ -110,7 +109,6 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 autoComplete={signup ? "new-password" : "current-password"}
                 minLength={6}
                 placeholder="Mínimo de 6 caracteres"
-                defaultValue={signup ? "" : "demo123"}
                 required
               />
             </Field>

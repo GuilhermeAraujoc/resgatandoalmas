@@ -118,7 +118,7 @@ export function Assessment() {
       <p className="footer-note">
         Não existem respostas certas ou erradas.
         <br />
-        Esta demonstração não realiza diagnóstico ou análise clínica.
+        Esta avaliação não substitui uma avaliação profissional.
       </p>
     </div>
   );
@@ -184,7 +184,7 @@ export function Result() {
             <h2 style={{ margin: "12px 0" }}>
               {calm
                 ? "Energia intensa"
-                : state.energy <= 40
+                : state.energy !== null && state.energy <= 40
                   ? "Disposição reduzida"
                   : "Em busca de equilíbrio"}
             </h2>
@@ -198,7 +198,7 @@ export function Result() {
           <h3>O que identificamos</h3>
           <p className="muted small">
             {calm
-              ? "Você relatou energia intensa. O programa demonstra práticas de desaceleração, presença e direcionamento."
+              ? "Você relatou energia intensa. O programa apresenta práticas de desaceleração, presença e direcionamento."
               : "Suas respostas ajudam a observar disposição, movimento e expressão criativa. Este programa apresenta atividades leves para explorar o seu bem-estar."}
           </p>
           <h3>O que isso significa?</h3>
@@ -218,7 +218,7 @@ export function Result() {
         <Notice>
           Esta avaliação possui finalidade complementar de bem-estar e não
           substitui avaliação, diagnóstico ou tratamento realizado por
-          profissionais de saúde. Resultados e protocolos são demonstrativos.
+          profissionais de saúde.
         </Notice>
       </div>
       <Button onClick={() => navigate("protocol")}>Ver meu protocolo</Button>

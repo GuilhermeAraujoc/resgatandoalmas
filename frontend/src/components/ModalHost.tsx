@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Field, Notice } from "./ui";
+import { request } from "../services/api";
 import { config } from "../config";
 import type { ModalKind } from "../types";
-import { errorMessage } from "../services/api";
 const titles: Record<ModalKind, string> = {
   whatsapp: "Atendimento pelo WhatsApp",
   schedule: "Agendar atendimento",
@@ -15,17 +15,31 @@ const titles: Record<ModalKind, string> = {
   sample: "Um momento para você",
 };
 export function ModalHost() {
-  const { modal, closeModal, notify, deleteAccount } = useApp();
-  const [deleting, setDeleting] = useState(false);
+  const { modal, closeModal, deleteAccount, notify } = useApp();
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (modal) ref.current?.showModal();
     else ref.current?.close();
   }, [modal]);
-  const complete = (event: FormEvent<HTMLFormElement>, message: string) => {
+  const send = async (path: string, method: "POST" | "DELETE", body?: unknown) => {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      if (method === "DELETE") await deleteAccount();
+      else await request(method, path, body);
+      closeModal();
+      if (method !== "DELETE") notify(path === "/auth/forgot-password" ? "Se o e-mail estiver cadastrado, você receberá as instruções." : "Solicitação concluída.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível concluir."); }
+    finally { pending.current = false; setBusy(false); }
+  };
+  const complete = (event: FormEvent<HTMLFormElement>, path: string) => {
     event.preventDefault();
-    closeModal();
-    notify(message);
+    void send(path, "POST", Object.fromEntries(new FormData(event.currentTarget)));
   };
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -42,6 +56,7 @@ export function ModalHost() {
           ×
         </button>
       </div>
+      {error && <p className="form-error" role="alert">{error}</p>}
       {modal === "whatsapp" && (
         <div className="stack">
           {config.whatsappNumber ? (
@@ -64,7 +79,7 @@ export function ModalHost() {
                 O número da empresa ainda não foi informado. O botão está
                 preparado para receber o link oficial do WhatsApp.
               </p>
-              <Notice>Demonstração: nenhuma mensagem será enviada.</Notice>
+
               <Button onClick={closeModal} full icon={false}>
                 Entendi
               </Button>
@@ -75,77 +90,49 @@ export function ModalHost() {
       {modal === "schedule" && (
         <form
           className="form"
-          onSubmit={(event) =>
-            complete(
-              event,
-              "Preferência registrada na demonstração. Nenhuma reserva foi realizada.",
-            )
-          }
+          onSubmit={(event) => complete(event, "/appointments")}
         >
-          <p className="small muted">
-            Simule sua preferência de atendimento. Nenhuma reserva real será
-            feita.
-          </p>
+          <p className="small muted">Envie sua preferência de atendimento.</p>
           <Field label="Data desejada">
-            <input type="date" min={minDate} required />
+            <input name="date" type="date" min={minDate} required />
           </Field>
           <Field label="Horário">
-            <select>
-              {["08:00", "10:00", "14:00", "16:00"].map((time) => (
-                <option key={time}>{time}</option>
-              ))}
-            </select>
+            <input name="time" type="time" required />
           </Field>
           <Field label="Observações (opcional)">
-            <textarea rows={2} />
+            <textarea name="note" rows={2} />
           </Field>
-          <Button type="submit">Simular agendamento</Button>
+          <Button type="submit" disabled={busy}>Solicitar agendamento</Button>
         </form>
       )}
       {(modal === "terms" || modal === "privacy") && (
         <div className="stack">
-          <p className="muted">
-            Este é um protótipo demonstrativo de bem-estar. Avaliações,
-            resultados e protocolos são fictícios e não substituem cuidados
-            profissionais de saúde.
-          </p>
-          <p className="muted">
-            Seus dados de cadastro, avaliações e feedbacks são armazenados para
-            acompanhar sua evolução. A senha é guardada apenas de forma
-            protegida, e não há análise real por IA. O player incorporado é
-            fornecido pelo YouTube e está sujeito às políticas desse serviço.
-          </p>
-          <Notice>
-            Documento demonstrativo. Termos e política definitivos devem ser
-            preparados antes do lançamento.
-          </Notice>
+          <Notice>Documento ainda não disponibilizado. Entre em contato com a equipe para mais informações.</Notice>
         </div>
       )}
       {(modal === "password" || modal === "forgot") && (
         <form
           className="form"
           onSubmit={(event) =>
-            complete(event, "Fluxo demonstrativo concluído.")
+            complete(event, modal === "forgot" ? "/auth/forgot-password" : "/auth/change-password")
           }
         >
-          <p className="muted small">
-            Fluxo demonstrativo. Nenhum e-mail será enviado ou senha alterada.
-          </p>
+          {modal === "password" && <Field label="Senha atual"><input name="currentPassword" type="password" autoComplete="current-password" required /></Field>}
           <Field label={modal === "forgot" ? "E-mail" : "Nova senha"}>
             <input
               required
+              name={modal === "forgot" ? "email" : "newPassword"}
               type={modal === "forgot" ? "email" : "password"}
               minLength={modal === "password" ? 6 : undefined}
             />
           </Field>
-          <Button type="submit">Continuar</Button>
+          <Button type="submit" disabled={busy}>Continuar</Button>
         </form>
       )}
       {modal === "delete" && (
         <div className="stack">
           <p className="muted">
-            Sua conta e todos os seus registros serão excluídos. Esta ação não
-            pode ser desfeita.
+            Confirme se deseja excluir sua conta. Esta ação será enviada ao servidor.
           </p>
           <div className="between">
             <Button variant="outline" icon={false} onClick={closeModal}>
@@ -154,19 +141,8 @@ export function ModalHost() {
             <Button
               variant="danger"
               icon={false}
-              disabled={deleting}
-              onClick={async () => {
-                setDeleting(true);
-                try {
-                  await deleteAccount();
-                  closeModal();
-                  notify("Sua conta foi excluída.");
-                } catch (error) {
-                  notify(errorMessage(error));
-                } finally {
-                  setDeleting(false);
-                }
-              }}
+              disabled={busy}
+              onClick={() => void send("/me", "DELETE")}
             >
               Excluir e sair
             </Button>

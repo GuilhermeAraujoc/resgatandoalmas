@@ -14,6 +14,9 @@ import { Contact } from "./pages/Contact";
 import { DesignSystem } from "./pages/DesignSystem";
 function Screen() {
   const { route, state } = useApp();
+  if (["protocol", "exercise", "feedback", "feedback-result", "result", "analysis"].includes(route) && state.scenario === null) {
+    return <section className="card"><h1>Nenhum protocolo disponível</h1><p>Faça uma avaliação para receber seu acompanhamento.</p><a className="btn" href="#assessment">Fazer avaliação</a></section>;
+  }
   switch (route) {
     case "home":
       return <Home />;
@@ -50,21 +53,21 @@ function Screen() {
   }
 }
 function AppContent() {
-  const { route, toast, authStatus } = useApp();
+  const { route, toast, authStatus, modal } = useApp();
   const auth = route === "login" || route === "signup";
   // Protected screens wait for the session check (anonymous users are redirected to login).
   const ready = auth || authStatus === "authenticated";
   return (
     <>
       <div className="ambient" aria-hidden="true" />
-      {!ready ? null : auth ? (
+      {!ready ? <main className="narrow" role="status">Carregando seus dados…</main> : auth ? (
         <Screen />
       ) : (
         <Layout>
           <Screen />
         </Layout>
       )}
-      <ModalHost />
+      <ModalHost key={modal ?? "closed"} />
       <div
         id="toast"
         className={toast ? "show" : ""}

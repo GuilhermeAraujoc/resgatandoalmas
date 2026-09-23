@@ -1,3 +1,5 @@
+import { config } from "../config";
+
 /** Error returned by the backend (`{ error: { message, fields } }`) or a network failure. */
 export class ApiError extends Error {
   readonly status: number;
@@ -21,9 +23,10 @@ export async function request<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, {
+    response = await fetch(`${config.apiUrl}${path}`, {
       method,
-      credentials: "same-origin",
+      credentials: "include",
+      signal: AbortSignal.timeout(15000),
       headers: body === undefined ? {} : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -41,6 +44,7 @@ export async function request<T>(
       data?.error?.message ?? "Algo deu errado. Tente novamente.",
       data?.error?.fields,
     );
+  if (data === null) throw new ApiError(response.status, "O servidor retornou uma resposta inválida.");
   return data as T;
 }
 

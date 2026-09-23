@@ -147,7 +147,7 @@ export function FeedbackResult() {
         ))}
       </div>
       <p className="muted small">
-        {state.energy > state.before
+        {state.energy !== null && state.before !== null && state.energy > state.before
           ? "Você relatou mais energia após esta atividade."
           : "Vamos continuar acompanhando sua evolução. Seu protocolo poderá ser ajustado conforme seus próximos feedbacks."}
       </p>

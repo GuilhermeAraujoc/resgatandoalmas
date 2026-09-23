@@ -1,3 +1,6 @@
+# resgatandoalmas
+Repositório para desenvolvimento do Sistema Resgatando Almas, app e site web
+
 # 1 - Iniciar os containers
 
 Na raiz do projeto, onde está localizado o arquivo docker-compose.yml, execute:

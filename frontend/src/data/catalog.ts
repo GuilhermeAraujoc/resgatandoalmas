@@ -14,7 +14,7 @@ export const exercises: Exercise[] = [
       "Inspire e expire suavemente, mantendo a atenção no presente.",
     ],
     id: "exercises-0",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Mobilização pélvica",
@@ -30,7 +30,7 @@ export const exercises: Exercise[] = [
       "Execute lentamente entre 10 e 15 repetições.",
     ],
     id: "exercises-1",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Cromoterapia · laranja",
@@ -45,7 +45,7 @@ export const exercises: Exercise[] = [
       "Perceba suas sensações, sem esperar um resultado específico.",
     ],
     id: "exercises-2",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Mantra VAM",
@@ -60,7 +60,7 @@ export const exercises: Exercise[] = [
       "Se desejar, vocalize VAM em volume confortável.",
     ],
     id: "exercises-3",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Dança livre",
@@ -75,7 +75,7 @@ export const exercises: Exercise[] = [
       "Movimente-se livremente, respeitando seus limites.",
     ],
     id: "exercises-4",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Relaxamento",
@@ -90,7 +90,7 @@ export const exercises: Exercise[] = [
       "Permaneça alguns minutos em silêncio.",
     ],
     id: "exercises-5",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
 ];
 
@@ -108,7 +108,7 @@ export const calmExercises: Exercise[] = [
       "Expire por cerca de 6 segundos, sem prender ou forçar a respiração.",
     ],
     id: "calmExercises-0",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Caminhada consciente",
@@ -123,7 +123,7 @@ export const calmExercises: Exercise[] = [
       "Observe o contato dos pés com o chão.",
     ],
     id: "calmExercises-1",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Cores suaves",
@@ -138,7 +138,7 @@ export const calmExercises: Exercise[] = [
       "Perceba suas sensações sem expectativas.",
     ],
     id: "calmExercises-2",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Atenção plena",
@@ -153,7 +153,7 @@ export const calmExercises: Exercise[] = [
       "Retorne gentilmente à respiração.",
     ],
     id: "calmExercises-3",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Alongamento suave",
@@ -168,7 +168,7 @@ export const calmExercises: Exercise[] = [
       "Não force amplitudes nem movimentos.",
     ],
     id: "calmExercises-4",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Relaxamento",
@@ -183,7 +183,7 @@ export const calmExercises: Exercise[] = [
       "Permaneça alguns minutos em silêncio.",
     ],
     id: "calmExercises-5",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
 ];
 
@@ -201,7 +201,7 @@ export const extraExercises: Exercise[] = [
       "Respeite uma amplitude confortável.",
     ],
     id: "extraExercises-0",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Postura da borboleta",
@@ -216,7 +216,7 @@ export const extraExercises: Exercise[] = [
       "Permaneça de 1 a 2 minutos, se confortável.",
     ],
     id: "extraExercises-1",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
   {
     name: "Gato-vaca",
@@ -231,7 +231,7 @@ export const extraExercises: Exercise[] = [
       "Realize de 8 a 10 repetições confortáveis.",
     ],
     id: "extraExercises-2",
-    videoId: "XRYGnFuzH34",
+    videoId: "",
   },
 ];
 

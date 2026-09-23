@@ -21,7 +21,8 @@ export const energyLevels: EnergyLevel[] = [
   "Alto",
   "Muito alto",
 ];
-export function energyLabel(value: number): EnergyLevel {
+export function energyLabel(value: number | null): EnergyLevel | "Sem avaliação" {
+  if (value === null) return "Sem avaliação";
   const bounded = Math.max(0, Math.min(100, value));
   return energyLevels[
     bounded <= 20
@@ -35,10 +36,10 @@ export function energyLabel(value: number): EnergyLevel {
             : 4
   ];
 }
-export function protocolItems(scenario: Scenario) {
-  return scenario === "calm" ? calmExercises : exercises;
+export function protocolItems(scenario: Scenario | null) {
+  return scenario === null ? [] : scenario === "calm" ? calmExercises : exercises;
 }
-export function libraryItems(scenario: Scenario) {
+export function libraryItems(scenario: Scenario | null) {
   return [...protocolItems(scenario), ...extraExercises];
 }
 export const feedbackKeys: FeedbackKey[] = [
@@ -55,19 +56,17 @@ export function isFeedbackComplete(feedback: Feedback) {
       feedback[key]! <= (key === "pain" ? 1 : 4),
   );
 }
-/** Shown until the user has an assessment or feedback on record. */
-const DEFAULT_ENERGY = 50;
 
 export function initialState(): AppState {
   return {
     profile: { name: "", email: "", cpf: "", phone: "", birth: "" },
-    energy: DEFAULT_ENERGY,
-    before: DEFAULT_ENERGY,
-    scenario: "vitality",
+    energy: null,
+    before: null,
+    scenario: null,
     question: 0,
     answers: Array(questions.length).fill(null),
     completed: [],
-    currentExerciseId: exercises[0].id,
+    currentExerciseId: "",
     feedback: { note: "" },
     history: [],
     weeklyEnergy: Array(7).fill(null),
@@ -110,22 +109,22 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, profile: action.profile };
     case "progress": {
       const { progress } = action;
-      const scenario: Scenario =
+      const scenario: Scenario | null =
         progress.scenario === "CALM"
           ? "calm"
           : progress.scenario === "VITALITY"
             ? "vitality"
-            : state.scenario;
+            : null;
       return {
         ...state,
-        energy: progress.currentEnergy ?? DEFAULT_ENERGY,
+        energy: progress.currentEnergy,
         scenario,
         completed: progress.completedActivityIds,
         currentExerciseId: libraryItems(scenario).some(
           (e) => e.id === state.currentExerciseId,
         )
           ? state.currentExerciseId
-          : protocolItems(scenario)[0].id,
+          : protocolItems(scenario)[0]?.id ?? "",
         history: progress.history,
         weeklyEnergy: progress.weeklyEnergy,
         summary: progress.summary,
@@ -178,7 +177,7 @@ export function reducer(state: AppState, action: Action): AppState {
     case "feedback-saved":
       return {
         ...state,
-        before: action.before ?? state.before,
+        before: action.before,
         energy: action.after,
         completed: [...new Set([...state.completed, state.currentExerciseId])],
       };

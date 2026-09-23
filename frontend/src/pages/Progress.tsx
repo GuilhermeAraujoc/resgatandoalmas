@@ -48,9 +48,9 @@ export function Progress() {
       <Card style={{ marginTop: 22 }}>
         <div className="cardhead">
           <h2>Evolução do nível de energia</h2>
-          <Badge>Esta semana</Badge>
+          <Badge>Últimos registros</Badge>
         </div>
-        <EnergyChart value={state.energy} values={state.weeklyEnergy} />
+        <EnergyChart records={state.history} />
         <p className="small muted">
           Eixo horizontal: dias da semana. Eixo vertical: índice ilustrativo de
           0 a 100, organizado a partir dos relatos de bem-estar. Não representa

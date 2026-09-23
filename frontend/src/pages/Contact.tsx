@@ -33,7 +33,7 @@ export function Contact() {
           <p className="small muted">
             Endereço: a definir
             <br />
-            Horário de demonstração: seg. a sex., 8h às 18h
+            Horário: a confirmar
             <br />
             Telefone: a configurar
           </p>

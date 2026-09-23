@@ -7,27 +7,15 @@ import {
   EnergyLevelIndicator,
   Icon,
   PageHeader,
-  Tabs,
 } from "../components/ui";
 export function Protocol() {
-  const { state, dispatch, startExercise } = useApp();
+  const { state, startExercise } = useApp();
   const calm = state.scenario === "calm";
   return (
     <>
       <PageHeader
         title="Meu Protocolo"
         subtitle="Um cuidado de cada vez, no seu ritmo."
-      />
-      <Tabs
-        values={["Movimento e vitalidade", "Desaceleração e presença"] as const}
-        value={calm ? "Desaceleração e presença" : "Movimento e vitalidade"}
-        label="Cenários de demonstração"
-        onChange={(value) =>
-          dispatch({
-            type: "scenario",
-            scenario: value === "Movimento e vitalidade" ? "vitality" : "calm",
-          })
-        }
       />
       <Card className="protocol-feature">
         <div className="between">
@@ -56,8 +44,8 @@ export function Protocol() {
         <h3>Entenda seu momento</h3>
         <p className="muted small" style={{ marginTop: 12 }}>
           {calm
-            ? "As práticas deste cenário convidam à organização e à presença, com movimentos lentos e cores suaves."
-            : "Este cenário de bem-estar utiliza o Chakra Sacro como referência cultural para práticas de movimento e expressão. Não representa uma medição física da energia."}{" "}
+            ? "As práticas deste protocolo convidam à organização e à presença, com movimentos lentos e cores suaves."
+            : "Este protocolo de bem-estar utiliza o Chakra Sacro como referência cultural para práticas de movimento e expressão. Não representa uma medição física da energia."}{" "}
           Escolha um momento tranquilo e respeite seus limites.
         </p>
       </Card>

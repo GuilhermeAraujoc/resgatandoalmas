@@ -17,10 +17,10 @@ export function Home() {
   const done = protocol.filter((e) => state.completed.includes(e.id)).length;
   const next =
     protocol.find((e) => !state.completed.includes(e.id)) ?? protocol[0];
-  const calm = state.scenario === "calm";
   const activeDays = state.summary.activeDaysThisWeek;
   const activeCount = activeDays.filter(Boolean).length;
-  const todayIndex = (new Date().getDay() + 6) % 7; // Monday = 0
+  const todayIndex = (new Date().getDay() + 6) % 7;
+  const calm = state.scenario === "calm";
   const date = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -62,7 +62,7 @@ export function Home() {
             <h3>Seu nível de energia</h3>
             <Badge>
               <Icon name="spark" />
-              Hoje
+              Último registro
             </Badge>
           </div>
           <span className="eyebrow">Nível atual</span>
@@ -75,12 +75,12 @@ export function Home() {
             <Icon name="chart" />
             Observe como seu nível energético varia ao longo da semana.
           </p>
-          <EnergyChart value={state.energy} values={state.weeklyEnergy} />
+          <EnergyChart records={state.history} />
         </Card>
-        <Card className="protocol-feature">
+        {protocol.length > 0 ? <Card className="protocol-feature">
           <div className="cardhead">
             <h3>Seu protocolo atual</h3>
-            <Badge>{done === 6 ? "Concluído" : "Em andamento"}</Badge>
+            <Badge>{protocol.length > 0 && done === protocol.length ? "Concluído" : "Em andamento"}</Badge>
           </div>
           <div className="protocol-symbol">
             <Icon name="flower" />
@@ -103,18 +103,19 @@ export function Home() {
               : "Movimento, criatividade e vitalidade."}
           </p>
           <div className="between progress-text">
-            <span>{done} de 6 atividades concluídas</span>
-            <span>{Math.round((done / 6) * 100)}%</span>
+            <span>{done} de {protocol.length} atividades concluídas</span>
+            <span>{Math.round(protocol.length ? (done / protocol.length) * 100 : 0)}%</span>
           </div>
-          <ProgressBar value={(done / 6) * 100} label="Atividades concluídas" />
+          <ProgressBar value={protocol.length ? (done / protocol.length) * 100 : 0} label="Atividades concluídas" />
           <Button full onClick={() => navigate("protocol")}>
             Continuar protocolo
           </Button>
         </Card>
+        : <Card><h3>Seu protocolo</h3><p>Nenhum protocolo disponível ainda.</p><Button onClick={() => navigate("assessment")}>Fazer avaliação</Button></Card>}
       </div>
       <h2 className="section-label">Continue cuidando de você</h2>
       <div className="grid quickgrid">
-        <Card className="exercise-preview">
+        {next && <Card className="exercise-preview">
           <ExerciseArt icon={next.icon} color={next.art} />
           <div>
             <span className="eyebrow">Próximo exercício</span>
@@ -127,6 +128,7 @@ export function Home() {
             </button>
           </div>
         </Card>
+        }
         <Card className="assessment-card">
           <div className="between">
             <h3>Avaliação energética</h3>
@@ -144,6 +146,7 @@ export function Home() {
           </a>
         </Card>
       </div>
+
       <Card className="weekly">
         <div className="tile-icon">
           <Icon name="sun" />
