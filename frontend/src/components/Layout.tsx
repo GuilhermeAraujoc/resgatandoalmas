@@ -32,7 +32,7 @@ const navigation: {
   { route: "profile", label: "Perfil", icon: "user", mobile: "Perfil" },
 ];
 export function Layout({ children }: { children: ReactNode }) {
-  const { state, route, openModal, notify } = useApp();
+  const { state, route, openModal, logout, busy } = useApp();
   const initials = state.profile.name
     .trim()
     .split(/\s+/)
@@ -64,10 +64,10 @@ export function Layout({ children }: { children: ReactNode }) {
             pequenos cuidados de hoje.
           </div>
           <nav className="nav">
-            <a href="#login">
+            <button disabled={busy} onClick={() => void logout()}>
               <Icon name="logout" />
               Sair
-            </a>
+            </button>
           </nav>
           <a href="#profile" className="side-profile">
             <span className="avatar">{initials}</span>
@@ -89,18 +89,6 @@ export function Layout({ children }: { children: ReactNode }) {
           </span>
           <Logo />
           <div className="top-right">
-            <span className="demo">DEMONSTRAÇÃO</span>
-            <button
-              className="notify"
-              aria-label="Notificações"
-              onClick={() =>
-                notify(
-                  "Seu próximo momento de cuidado está disponível no protocolo.",
-                )
-              }
-            >
-              <Icon name="bell" />
-            </button>
             <a href="#profile" className="avatar" aria-label="Abrir meu perfil">
               {initials}
             </a>
@@ -110,7 +98,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <p className="footer-note">
           Resgatando almas · Seu tempo. Seu ritmo. Seu equilíbrio.
           <br />
-          Práticas complementares de bem-estar · Dados ilustrativos
+          Práticas complementares de bem-estar
         </p>
       </main>
       {!["assessment", "analysis"].includes(route) && (

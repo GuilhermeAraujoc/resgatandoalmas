@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, PageHeader } from "../components/ui";
 export function Profile() {
-  const { state, dispatch, notify, openModal } = useApp();
+  const { state, saveProfile, busy, logout, openModal } = useApp();
   const [error, setError] = useState("");
   const initials = state.profile.name
     .trim()
@@ -18,17 +18,13 @@ export function Profile() {
       setError("Informe seu nome.");
       return;
     }
-    dispatch({
-      type: "profile",
-      profile: {
-        name,
-        email: String(data.get("email") ?? ""),
-        phone: String(data.get("phone") ?? ""),
-        birth: String(data.get("birth") ?? ""),
-      },
-    });
     setError("");
-    notify("Alterações salvas nesta sessão de demonstração.");
+    void saveProfile({
+      name,
+      email: String(data.get("email") ?? ""),
+      phone: String(data.get("phone") ?? ""),
+      birth: String(data.get("birth") ?? ""),
+    });
   };
   return (
     <>
@@ -54,7 +50,7 @@ export function Profile() {
             </span>
             <div>
               <h2>{state.profile.name}</h2>
-              <p className="muted small">Conta de demonstração</p>
+              <p className="muted small">Minha conta</p>
             </div>
           </div>
           <form className="form" onSubmit={submit}>
@@ -62,14 +58,6 @@ export function Profile() {
               <input name="name" required defaultValue={state.profile.name} />
             </Field>
             <div className="grid two">
-              <Field label="CPF">
-                <input
-                  name="cpf"
-                  inputMode="numeric"
-                  placeholder="Somente demonstração"
-                  maxLength={14}
-                />
-              </Field>
               <Field label="Data de nascimento">
                 <input
                   name="birth"
@@ -99,7 +87,7 @@ export function Profile() {
                 {error}
               </p>
             )}
-            <Button type="submit" icon="check">
+            <Button type="submit" icon="check" disabled={busy}>
               Salvar alterações
             </Button>
           </form>
@@ -130,9 +118,7 @@ export function Profile() {
             >
               Excluir conta
             </Button>
-            <a className="textlink" href="#login">
-              Sair <Icon name="logout" />
-            </a>
+            <button className="textlink" disabled={busy} onClick={() => void logout()}>Sair <Icon name="logout" /></button>
           </Card>
           <a className="textlink" href="#design">
             Explorar Design System <Icon name="arrow" />

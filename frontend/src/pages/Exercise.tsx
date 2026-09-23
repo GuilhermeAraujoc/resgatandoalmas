@@ -2,7 +2,6 @@ import { useApp } from "../state/AppContext";
 import { libraryItems, protocolItems } from "../state/model";
 import { useCountdown } from "../hooks/useCountdown";
 import { Button, Card, Notice, PageHeader } from "../components/ui";
-import { config } from "../config";
 export function Exercise() {
   const { state, dispatch, navigate } = useApp();
   const exercise =
@@ -12,13 +11,14 @@ export function Exercise() {
   const index = protocolItems(state.scenario).findIndex(
     (item) => item.id === exercise.id,
   );
-  const timer = useCountdown(exercise.time * 60);
-  const videoId = exercise.videoId || config.defaultVideoId;
+  const timer = useCountdown((exercise?.time ?? 0) * 60);
+  if (!exercise) return <Card>Nenhum exercício disponível.</Card>;
+  const videoId = exercise.videoId;
   return (
     <>
       <PageHeader
         title={exercise.name}
-        subtitle={`${index >= 0 ? `Exercício ${index + 1} de 6` : "Prática complementar"} · ${exercise.time} minutos · Fácil`}
+        subtitle={`${index >= 0 ? `Exercício ${index + 1} de ${protocolItems(state.scenario).length}` : "Prática complementar"} · ${exercise.time} minutos · Fácil`}
         extra={
           <a className="textlink" href="#protocol">
             Voltar ao protocolo
@@ -28,26 +28,14 @@ export function Exercise() {
       <div className="grid dashboard">
         <div className="stack">
           <div className="video">
-            <iframe
+            {videoId ? <iframe
               src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0`}
-              title="Vídeo de exemplo incorporado do YouTube"
+              title={exercise.name}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
               referrerPolicy="strict-origin-when-cross-origin"
-            />
+            /> : <p className="muted">Vídeo ainda não disponível.</p>}
           </div>
-          <p className="small muted">
-            Vídeo de exemplo do YouTube para demonstrar o player. Não é um
-            tutorial específico de cada prática.{" "}
-            <a
-              className="textlink"
-              href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir no YouTube ↗
-            </a>
-          </p>
           <Card>
             <h3>Como realizar</h3>
             <ol className="instructions">

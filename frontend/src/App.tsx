@@ -14,6 +14,12 @@ import { Contact } from "./pages/Contact";
 import { DesignSystem } from "./pages/DesignSystem";
 function Screen() {
   const { route, state } = useApp();
+  if (["protocol", "exercise", "feedback", "feedback-result", "result", "analysis"].includes(route) && state.scenario === null) {
+    return <section className="card"><h1>Nenhum protocolo disponível</h1><p>Faça uma avaliação para receber seu acompanhamento.</p><a className="btn" href="#assessment">Fazer avaliação</a></section>;
+  }
+  if (["exercise", "feedback", "feedback-result"].includes(route) && !state.currentExerciseId) {
+    return <section className="card"><p>Selecione uma atividade para continuar.</p><a className="btn" href="#exercises">Ver exercícios</a></section>;
+  }
   switch (route) {
     case "home":
       return <Home />;
@@ -50,7 +56,16 @@ function Screen() {
   }
 }
 function AppContent() {
-  const { route, toast } = useApp();
+  const { route, toast, session, error, reload, modal } = useApp();
+  if (session === "loading") return <main className="narrow" role="status">Carregando seus dados…</main>;
+  if (session !== "authenticated" && route !== "login" && route !== "signup") {
+    return <main className="narrow stack">
+      <h1>Bem-vindo</h1>
+      <p>{error || "Entre na sua conta para acessar seu acompanhamento."}</p>
+      <a className="btn" href="#login">Entrar</a>
+      <button className="textlink" onClick={() => void reload()}>Tentar carregar novamente</button>
+    </main>;
+  }
   const auth = route === "login" || route === "signup";
   return (
     <>
@@ -62,7 +77,8 @@ function AppContent() {
           <Screen />
         </Layout>
       )}
-      <ModalHost />
+      <ModalHost key={modal ?? "closed"} />
+      {error && !auth && <p role="alert" className="form-error narrow">{error}</p>}
       <div
         id="toast"
         className={toast ? "show" : ""}

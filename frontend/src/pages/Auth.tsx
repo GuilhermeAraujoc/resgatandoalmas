@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, Logo } from "../components/ui";
 export function Auth({ signup = false }: { signup?: boolean }) {
-  const { state, dispatch, navigate, openModal } = useApp();
+  const { authenticate, busy, error: apiError, openModal } = useApp();
   const [error, setError] = useState("");
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -11,22 +11,17 @@ export function Auth({ signup = false }: { signup?: boolean }) {
       setError("As senhas não coincidem. Confira e tente novamente.");
       return;
     }
-    const name = signup
-      ? String(data.get("name") ?? "").trim()
-      : state.profile.name;
-    if (!name) {
-      setError("Informe seu nome.");
-      return;
+    setError("");
+    const payload: Record<string, string> = {
+      email: String(data.get("email") ?? "").trim(),
+      password: String(data.get("password") ?? ""),
+    };
+    if (signup) {
+      payload.name = String(data.get("name") ?? "").trim();
+      payload.cpf = String(data.get("cpf") ?? "").replace(/\D/g, "");
+      if (!payload.name) { setError("Informe seu nome."); return; }
     }
-    dispatch({
-      type: "profile",
-      profile: {
-        ...state.profile,
-        name,
-        email: String(data.get("email") ?? ""),
-      },
-    });
-    navigate("welcome");
+    void authenticate(signup, payload);
   };
   return (
     <div className="auth">
@@ -47,7 +42,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
       </section>
       <section className="auth-form">
         <div>
-          <span className="demo">PROTÓTIPO · DADOS FICTÍCIOS</span>
+
           <h1 style={{ marginTop: 24 }}>
             {signup ? "Comece sua jornada" : "Bem-vindo novamente"}
           </h1>
@@ -85,7 +80,6 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 type="email"
                 autoComplete="email"
                 placeholder="seu@email.com"
-                defaultValue={signup ? "" : "mariana@exemplo.com"}
                 required
               />
             </Field>
@@ -96,7 +90,6 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 autoComplete={signup ? "new-password" : "current-password"}
                 minLength={6}
                 placeholder="Mínimo de 6 caracteres"
-                defaultValue={signup ? "" : "demo123"}
                 required
               />
             </Field>
@@ -127,10 +120,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
               </>
             ) : (
               <div className="between">
-                <label className="check">
-                  <input type="checkbox" />
-                  Lembrar de mim
-                </label>
+
                 <button
                   type="button"
                   className="textlink"
@@ -140,12 +130,12 @@ export function Auth({ signup = false }: { signup?: boolean }) {
                 </button>
               </div>
             )}
-            {error && (
+            {(error || apiError) && (
               <p role="alert" className="form-error">
-                {error}
+                {error || apiError}
               </p>
             )}
-            <Button type="submit" full>
+            <Button type="submit" full disabled={busy}>
               {signup ? "Criar minha conta" : "Entrar"}
             </Button>
           </form>
@@ -155,14 +145,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
               {signup ? "Entrar" : "Criar conta"}
             </a>
           </div>
-          <p className="footer-note">
-            Acesso simulado. Use dados fictícios.
-            <br />
-            Nenhuma senha ou CPF é armazenado.
-          </p>
-          <a className="textlink" href="#home">
-            Explorar demonstração <Icon name="arrow" />
-          </a>
+
         </div>
       </section>
     </div>

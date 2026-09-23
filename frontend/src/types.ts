@@ -61,15 +61,15 @@ export interface Feedback {
 export type FeedbackKey = Exclude<keyof Feedback, "note">;
 export interface FeedbackRecord extends Feedback {
   exerciseId: string;
-  before: number;
+  before: number | null;
   after: number;
   date: string;
 }
 export interface AppState {
   profile: Profile;
-  energy: number;
-  before: number;
-  scenario: Scenario;
+  energy: number | null;
+  before: number | null;
+  scenario: Scenario | null;
   answers: (number | null)[];
   question: number;
   completed: string[];
@@ -87,3 +87,6 @@ export type ModalKind =
   | "forgot"
   | "delete"
   | "sample";
+
+/** Persisted user data returned by the backend, without UI drafts. */
+export type UserSnapshot = Pick<AppState, "profile" | "energy" | "before" | "scenario" | "completed" | "currentExerciseId" | "history" | "feedbackHistory">;

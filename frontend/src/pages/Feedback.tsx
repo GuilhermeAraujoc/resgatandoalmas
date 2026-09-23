@@ -43,7 +43,7 @@ const groups: { key: FeedbackKey; question: string; options: string[] }[] = [
   },
 ];
 export function Feedback() {
-  const { state, dispatch, navigate } = useApp();
+  const { state, dispatch, submitFeedback, busy } = useApp();
   return (
     <div className="narrow">
       <Card>
@@ -98,14 +98,8 @@ export function Feedback() {
         <Button
           full
           style={{ marginTop: 25 }}
-          disabled={!isFeedbackComplete(state.feedback)}
-          onClick={() => {
-            dispatch({
-              type: "submit-feedback",
-              date: new Date().toISOString(),
-            });
-            navigate("feedback-result");
-          }}
+          disabled={busy || !isFeedbackComplete(state.feedback)}
+          onClick={() => void submitFeedback()}
         >
           Enviar feedback
         </Button>
@@ -118,7 +112,11 @@ export function FeedbackResult() {
   const next = protocolItems(state.scenario).find(
     (item) => !state.completed.includes(item.id),
   );
-  const discomfort = state.feedback.pain === 0;
+  const record = state.feedbackHistory.at(-1);
+  if (!record || record.exerciseId !== state.currentExerciseId) {
+    return <Card><p>Nenhum feedback registrado para esta atividade.</p><Button onClick={() => navigate("exercises")}>Ver exercícios</Button></Card>;
+  }
+  const discomfort = record.pain === 0;
   return (
     <Card className="narrow center">
       <div className="intro-icon">
@@ -130,8 +128,8 @@ export function FeedbackResult() {
       </p>
       <div className="grid two" style={{ margin: "30px 0", textAlign: "left" }}>
         {[
-          { title: "Antes do exercício", value: state.before },
-          { title: "Depois do exercício", value: state.energy },
+          { title: "Antes do exercício", value: record.before },
+          { title: "Depois do exercício", value: record.after },
         ].map((item) => (
           <Card key={item.title}>
             <span className="eyebrow">{item.title}</span>
@@ -141,7 +139,7 @@ export function FeedbackResult() {
         ))}
       </div>
       <p className="muted small">
-        {state.energy > state.before
+        {record.before !== null && record.after > record.before
           ? "Você relatou mais energia após esta atividade."
           : "Vamos continuar acompanhando sua evolução. Seu protocolo poderá ser ajustado conforme seus próximos feedbacks."}
       </p>

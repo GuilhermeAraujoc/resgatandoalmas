@@ -5,6 +5,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
+import type { EnergyRecord } from "../types";
 import { paths } from "../data/catalog";
 import { energyLabel, energyLevels } from "../state/model";
 
@@ -123,9 +124,10 @@ export function EnergyLevelIndicator({
   value,
   circular = false,
 }: {
-  value: number;
+  value: number | null;
   circular?: boolean;
 }) {
+  if (value === null) return <p className="muted">Sem avaliação registrada.</p>;
   if (circular)
     return (
       <div
@@ -163,71 +165,23 @@ export function EnergyLevelIndicator({
     </>
   );
 }
-export function EnergyChart({ value }: { value: number }) {
+export function EnergyChart({ records = [] }: { records?: EnergyRecord[] }) {
   const gradient = useId().replace(/:/g, "");
-  const values = [32, 38, 41, 48, 52, 55, value];
-  const points = values.map((v, i) => ({ x: 52 + i * 67, y: 183 - v * 1.25 }));
-  const coordinates = points.map((p) => `${p.x},${p.y}`).join(" ");
-  const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-  return (
-    <svg
-      className="graph"
-      viewBox="0 0 490 230"
-      role="img"
-      aria-label="Evolução energética: índice ilustrativo de 0 a 100 ao longo dos dias da semana"
-    >
-      <defs>
-        <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-          <stop stopColor="#a999de" stopOpacity=".22" />
-          <stop offset="1" stopColor="#a999de" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <text x="8" y="13" className="axis-label">
-        Índice energético (0–100) · demonstração
-      </text>
-      {[0, 25, 50, 75, 100].map((v) => (
-        <g key={v}>
-          <line x1="42" y1={183 - v * 1.25} x2="464" y2={183 - v * 1.25} />
-          <text x="8" y={187 - v * 1.25}>
-            {v}
-          </text>
-        </g>
-      ))}
-      <polygon
-        points={`52,183 ${coordinates} 454,183`}
-        fill={`url(#${gradient})`}
-      />
-      <polyline
-        points={coordinates}
-        fill="none"
-        stroke="#a393d3"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {points.map((p, i) => (
-        <circle
-          key={i}
-          cx={p.x}
-          cy={p.y}
-          r={i === 6 ? 4 : 2.5}
-          fill="#a08dd2"
-          stroke="white"
-          strokeWidth="2"
-        >
-          <title>{`${days[i]}: ${energyLabel(values[i])} (${values[i]} pontos ilustrativos)`}</title>
-        </circle>
-      ))}
-      {days.map((d, i) => (
-        <text key={i} x={52 + i * 67} y="204" textAnchor="middle">
-          {d}
-        </text>
-      ))}
-      <text x="250" y="225" textAnchor="middle" className="axis-label">
-        Dias da semana · período ilustrativo
-      </text>
-    </svg>
-  );
+  const recent = [...records].sort((a, b) => Date.parse(a.date) - Date.parse(b.date)).slice(-7);
+  if (!recent.length) return <p className="muted">Seu gráfico aparecerá após o primeiro registro.</p>;
+  const points = recent.map((record, i) => ({
+    x: recent.length === 1 ? 250 : 52 + i * (402 / (recent.length - 1)),
+    y: 183 - record.value * 1.25,
+  }));
+  return <svg className="graph" viewBox="0 0 490 230" role="img" aria-label="Histórico dos últimos registros de energia">
+    <defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#a999de" stopOpacity=".22" /><stop offset="1" stopColor="#a999de" stopOpacity="0" /></linearGradient></defs>
+    {[0, 25, 50, 75, 100].map(value => <g key={value}><line x1="42" y1={183-value*1.25} x2="464" y2={183-value*1.25} /><text x="8" y={187-value*1.25}>{value}</text></g>)}
+    <polyline points={points.map(point => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#a393d3" strokeWidth="2.5" />
+    {points.map((point, index) => <g key={recent[index].id}>
+      <circle cx={point.x} cy={point.y} r="4" fill="#a08dd2"><title>{`${new Date(recent[index].date).toLocaleString("pt-BR")}: ${recent[index].value}`}</title></circle>
+      <text x={point.x} y="210" textAnchor="middle">{new Date(recent[index].date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</text>
+    </g>)}
+  </svg>;
 }
 export function Field({
   label,

@@ -7,7 +7,6 @@ import {
   EnergyChart,
   EnergyLevelIndicator,
   PageHeader,
-  ProgressBar,
 } from "../components/ui";
 export function Progress() {
   const { state, navigate } = useApp();
@@ -19,10 +18,10 @@ export function Progress() {
     ["Evolução", "Em acompanhamento", "Observe como você se sente"],
     [
       "Exercícios realizados",
-      String(9 + state.completed.length),
+      String(state.feedbackHistory.length),
       "Momentos de autocuidado",
     ],
-    ["Sequência", "5 dias", "Um passo de cada vez"],
+    ["Avaliações", String(assessments.length), "Registros realizados"],
   ];
   return (
     <>
@@ -42,11 +41,11 @@ export function Progress() {
       <Card style={{ marginTop: 22 }}>
         <div className="cardhead">
           <h2>Evolução do nível de energia</h2>
-          <Badge>Esta semana</Badge>
+          <Badge>Últimos registros</Badge>
         </div>
-        <EnergyChart value={state.energy} />
+        <EnergyChart records={state.history} />
         <p className="small muted">
-          Eixo horizontal: dias da semana. Eixo vertical: índice ilustrativo de
+          Eixo horizontal: datas dos registros. Eixo vertical: índice de
           0 a 100, organizado a partir dos relatos de bem-estar. Não representa
           uma medida clínica.
         </p>
@@ -57,6 +56,7 @@ export function Progress() {
       <div className="grid two" style={{ marginTop: 22 }}>
         <Card>
           <h3>Histórico de avaliações</h3>
+          {assessments.length === 0 && <p className="muted">Nenhuma avaliação registrada.</p>}
           <div className="timeline" style={{ marginTop: 25 }}>
             {[...assessments].reverse().map((record) => (
               <div key={record.id}>
@@ -75,20 +75,8 @@ export function Progress() {
           </div>
         </Card>
         <Card>
-          <h3>Exercícios concluídos esta semana</h3>
-          <strong
-            style={{
-              font: "700 36px Manrope",
-              display: "block",
-              margin: "25px 0",
-            }}
-          >
-            5{" "}
-            <span className="muted" style={{ fontSize: 20, fontWeight: 400 }}>
-              de 7
-            </span>
-          </strong>
-          <ProgressBar value={(5 / 7) * 100} label="Exercícios da semana" />
+          <h3>Atividades registradas</h3>
+          <strong>{state.feedbackHistory.length}</strong>
           <p className="muted small" style={{ margin: "18px 0" }}>
             Valorize cada momento que você reservou para si.
           </p>
