@@ -11,6 +11,7 @@ import {
   PageHeader,
   ProgressBar,
 } from "../components/ui";
+import { errorMessage } from "../services/api";
 const topics = [
   "Disposição",
   "Motivação",
@@ -26,18 +27,25 @@ const topics = [
   "Equilíbrio",
 ];
 export function Assessment() {
-  const { state, dispatch, navigate } = useApp();
+  const { state, dispatch, navigate, notify, submitAssessment } = useApp();
+  const [pending, setPending] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     title.current?.focus();
   }, [state.question]);
-  const next = () => {
+  const next = async () => {
     if (state.answers[state.question] === null) return;
-    if (state.question < questions.length - 1)
+    if (state.question < questions.length - 1) {
       dispatch({ type: "question", index: state.question + 1 });
-    else {
-      dispatch({ type: "evaluate", date: new Date().toISOString() });
+      return;
+    }
+    setPending(true);
+    try {
+      await submitAssessment();
       navigate("analysis");
+    } catch (error) {
+      notify(errorMessage(error));
+      setPending(false);
     }
   };
   return (
@@ -98,7 +106,7 @@ export function Assessment() {
             Anterior
           </Button>
           <Button
-            disabled={state.answers[state.question] === null}
+            disabled={state.answers[state.question] === null || pending}
             onClick={next}
           >
             {state.question === questions.length - 1

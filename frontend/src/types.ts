@@ -42,6 +42,7 @@ export interface Exercise {
 export interface Profile {
   name: string;
   email: string;
+  cpf: string;
   phone: string;
   birth: string;
 }
@@ -59,11 +60,12 @@ export interface Feedback {
   note: string;
 }
 export type FeedbackKey = Exclude<keyof Feedback, "note">;
-export interface FeedbackRecord extends Feedback {
-  exerciseId: string;
-  before: number;
-  after: number;
-  date: string;
+export interface ProgressSummary {
+  totalCompleted: number;
+  completedThisWeek: number;
+  /** Monday…Sunday. */
+  activeDaysThisWeek: boolean[];
+  streakDays: number;
 }
 export interface AppState {
   profile: Profile;
@@ -75,8 +77,10 @@ export interface AppState {
   completed: string[];
   currentExerciseId: string;
   history: EnergyRecord[];
+  /** Last energy value of each day this week, Monday…Sunday. */
+  weeklyEnergy: (number | null)[];
+  summary: ProgressSummary;
   feedback: Feedback;
-  feedbackHistory: FeedbackRecord[];
 }
 export type ModalKind =
   | "whatsapp"

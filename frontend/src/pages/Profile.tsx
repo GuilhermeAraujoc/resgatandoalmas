@@ -1,34 +1,45 @@
 import { useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, PageHeader } from "../components/ui";
+import { errorMessage } from "../services/api";
+import { formatCpf, formatPhone } from "../utils/format";
 export function Profile() {
-  const { state, dispatch, notify, openModal } = useApp();
+  const { state, notify, openModal, saveProfile, logout } = useApp();
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   const initials = state.profile.name
     .trim()
     .split(/\s+/)
     .map((word) => word[0])
     .slice(0, 2)
     .join("");
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "").trim();
+    const text = (key: string) => String(data.get(key) ?? "");
+    const name = text("name").trim();
     if (!name) {
       setError("Informe seu nome.");
       return;
     }
-    dispatch({
-      type: "profile",
-      profile: {
-        name,
-        email: String(data.get("email") ?? ""),
-        phone: String(data.get("phone") ?? ""),
-        birth: String(data.get("birth") ?? ""),
-      },
-    });
+    const cpf = text("cpf");
     setError("");
-    notify("Alterações salvas nesta sessão de demonstração.");
+    setPending(true);
+    try {
+      await saveProfile({
+        name,
+        email: text("email"),
+        // Unchanged CPF is not re-sent.
+        cpf: cpf.replace(/\D/g, "") === state.profile.cpf ? "" : cpf,
+        phone: text("phone"),
+        birthDate: text("birth"),
+      });
+      notify("Alterações salvas.");
+    } catch (failure) {
+      setError(errorMessage(failure));
+    } finally {
+      setPending(false);
+    }
   };
   return (
     <>
@@ -54,7 +65,7 @@ export function Profile() {
             </span>
             <div>
               <h2>{state.profile.name}</h2>
-              <p className="muted small">Conta de demonstração</p>
+              <p className="muted small">Minha conta</p>
             </div>
           </div>
           <form className="form" onSubmit={submit}>
@@ -66,8 +77,9 @@ export function Profile() {
                 <input
                   name="cpf"
                   inputMode="numeric"
-                  placeholder="Somente demonstração"
+                  placeholder="000.000.000-00"
                   maxLength={14}
+                  defaultValue={formatCpf(state.profile.cpf)}
                 />
               </Field>
               <Field label="Data de nascimento">
@@ -90,7 +102,7 @@ export function Profile() {
               <input
                 name="phone"
                 type="tel"
-                defaultValue={state.profile.phone}
+                defaultValue={formatPhone(state.profile.phone)}
                 placeholder="(00) 00000-0000"
               />
             </Field>
@@ -99,7 +111,7 @@ export function Profile() {
                 {error}
               </p>
             )}
-            <Button type="submit" icon="check">
+            <Button type="submit" icon="check" disabled={pending}>
               Salvar alterações
             </Button>
           </form>
@@ -130,7 +142,14 @@ export function Profile() {
             >
               Excluir conta
             </Button>
-            <a className="textlink" href="#login">
+            <a
+              className="textlink"
+              href="#login"
+              onClick={(event) => {
+                event.preventDefault();
+                void logout();
+              }}
+            >
               Sair <Icon name="logout" />
             </a>
           </Card>

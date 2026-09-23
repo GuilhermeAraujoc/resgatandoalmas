@@ -18,6 +18,9 @@ export function Home() {
   const next =
     protocol.find((e) => !state.completed.includes(e.id)) ?? protocol[0];
   const calm = state.scenario === "calm";
+  const activeDays = state.summary.activeDaysThisWeek;
+  const activeCount = activeDays.filter(Boolean).length;
+  const todayIndex = (new Date().getDay() + 6) % 7; // Monday = 0
   const date = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -72,7 +75,7 @@ export function Home() {
             <Icon name="chart" />
             Observe como seu nível energético varia ao longo da semana.
           </p>
-          <EnergyChart value={state.energy} />
+          <EnergyChart value={state.energy} values={state.weeklyEnergy} />
         </Card>
         <Card className="protocol-feature">
           <div className="cardhead">
@@ -147,13 +150,20 @@ export function Home() {
         </div>
         <div>
           <h3>Pequenos passos, grandes mudanças.</h3>
-          <p>Você reservou um momento para si em 5 dias desta semana.</p>
+          <p>
+            {activeCount === 0
+              ? "Reserve um momento para si nesta semana."
+              : `Você reservou um momento para si em ${activeCount} ${activeCount === 1 ? "dia" : "dias"} desta semana.`}
+          </p>
         </div>
         <div className="days">
           {["S", "T", "Q", "Q", "S", "S", "D"].map((day, index) => (
-            <span key={index} className={`day ${index > 4 ? "future" : ""}`}>
+            <span
+              key={index}
+              className={`day ${index > todayIndex ? "future" : ""}`}
+            >
               <span>{day}</span>
-              <b>{index < 5 ? "✓" : "·"}</b>
+              <b>{activeDays[index] ? "✓" : "·"}</b>
             </span>
           ))}
         </div>

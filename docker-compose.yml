@@ -10,6 +10,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      API_PROXY_TARGET: http://backend:3001
     depends_on:
       - backend
 
@@ -30,6 +32,10 @@ services:
       DB_NAME: resgatando_almas
       DB_USER: postgres
       DB_PASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/resgatando_almas?schema=public
+      APP_TIMEZONE: America/Sao_Paulo
+      # Requests arrive through the Vite dev proxy on the Docker network.
+      TRUST_PROXY: uniquelocal
     depends_on:
       postgres:
         condition: service_healthy

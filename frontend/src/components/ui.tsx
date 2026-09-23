@@ -163,11 +163,26 @@ export function EnergyLevelIndicator({
     </>
   );
 }
-export function EnergyChart({ value }: { value: number }) {
+/**
+ * Weekly energy line. `values` holds real Monday…Sunday values (null = no
+ * record that day); without it an illustrative series ending at `value` is drawn.
+ */
+export function EnergyChart({
+  value,
+  values,
+}: {
+  value: number;
+  values?: (number | null)[];
+}) {
   const gradient = useId().replace(/:/g, "");
-  const values = [32, 38, 41, 48, 52, 55, value];
-  const points = values.map((v, i) => ({ x: 52 + i * 67, y: 183 - v * 1.25 }));
+  const illustrative = values === undefined;
+  const series = values ?? [32, 38, 41, 48, 52, 55, value];
+  const points = series.flatMap((v, i) =>
+    v === null ? [] : [{ x: 52 + i * 67, y: 183 - v * 1.25, v, day: i }],
+  );
   const coordinates = points.map((p) => `${p.x},${p.y}`).join(" ");
+  const first = points[0];
+  const last = points.at(-1);
   const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   return (
     <svg
@@ -183,7 +198,7 @@ export function EnergyChart({ value }: { value: number }) {
         </linearGradient>
       </defs>
       <text x="8" y="13" className="axis-label">
-        Índice energético (0–100) · demonstração
+        Índice energético (0–100){illustrative ? " · demonstração" : ""}
       </text>
       {[0, 25, 50, 75, 100].map((v) => (
         <g key={v}>
@@ -193,10 +208,12 @@ export function EnergyChart({ value }: { value: number }) {
           </text>
         </g>
       ))}
-      <polygon
-        points={`52,183 ${coordinates} 454,183`}
-        fill={`url(#${gradient})`}
-      />
+      {first && last && (
+        <polygon
+          points={`${first.x},183 ${coordinates} ${last.x},183`}
+          fill={`url(#${gradient})`}
+        />
+      )}
       <polyline
         points={coordinates}
         fill="none"
@@ -205,17 +222,17 @@ export function EnergyChart({ value }: { value: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {points.map((p, i) => (
+      {points.map((p) => (
         <circle
-          key={i}
+          key={p.day}
           cx={p.x}
           cy={p.y}
-          r={i === 6 ? 4 : 2.5}
+          r={p === last ? 4 : 2.5}
           fill="#a08dd2"
           stroke="white"
           strokeWidth="2"
         >
-          <title>{`${days[i]}: ${energyLabel(values[i])} (${values[i]} pontos ilustrativos)`}</title>
+          <title>{`${days[p.day]}: ${energyLabel(p.v)} (${p.v} pontos${illustrative ? " ilustrativos" : ""})`}</title>
         </circle>
       ))}
       {days.map((d, i) => (
@@ -224,7 +241,7 @@ export function EnergyChart({ value }: { value: number }) {
         </text>
       ))}
       <text x="250" y="225" textAnchor="middle" className="axis-label">
-        Dias da semana · período ilustrativo
+        Dias da semana{illustrative ? " · período ilustrativo" : ""}
       </text>
     </svg>
   );

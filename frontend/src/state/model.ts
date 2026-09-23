@@ -4,6 +4,7 @@ import {
   extraExercises,
   questions,
 } from "../data/catalog";
+import type { ProgressDto, UserDto } from "../services/dto";
 import type {
   AppState,
   EnergyLevel,
@@ -54,62 +55,82 @@ export function isFeedbackComplete(feedback: Feedback) {
       feedback[key]! <= (key === "pain" ? 1 : 4),
   );
 }
+/** Shown until the user has an assessment or feedback on record. */
+const DEFAULT_ENERGY = 50;
+
 export function initialState(): AppState {
   return {
-    profile: {
-      name: "Mariana Silva",
-      email: "mariana@exemplo.com",
-      phone: "",
-      birth: "",
-    },
-    energy: 55,
-    before: 38,
+    profile: { name: "", email: "", cpf: "", phone: "", birth: "" },
+    energy: DEFAULT_ENERGY,
+    before: DEFAULT_ENERGY,
     scenario: "vitality",
     question: 0,
     answers: Array(questions.length).fill(null),
-    completed: [exercises[0].id, exercises[2].id, exercises[3].id],
-    currentExerciseId: exercises[1].id,
+    completed: [],
+    currentExerciseId: exercises[0].id,
     feedback: { note: "" },
-    feedbackHistory: [],
-    history: [
-      {
-        id: "demo-1",
-        date: "2026-09-03T12:00:00",
-        value: 28,
-        kind: "assessment",
-      },
-      {
-        id: "demo-2",
-        date: "2026-09-07T12:00:00",
-        value: 41,
-        kind: "assessment",
-      },
-      {
-        id: "demo-3",
-        date: "2026-09-13T12:00:00",
-        value: 55,
-        kind: "assessment",
-      },
-    ],
+    history: [],
+    weeklyEnergy: Array(7).fill(null),
+    summary: {
+      totalCompleted: 0,
+      completedThisWeek: 0,
+      activeDaysThisWeek: Array(7).fill(false),
+      streakDays: 0,
+    },
   };
 }
+
+export function profileFromUser(user: UserDto): Profile {
+  return {
+    name: user.name,
+    email: user.email,
+    cpf: user.cpf,
+    phone: user.phone ?? "",
+    birth: user.birthDate ?? "",
+  };
+}
+
 export type Action =
   | { type: "profile"; profile: Profile }
+  | { type: "progress"; progress: ProgressDto }
   | { type: "answer"; index: number; value: number }
   | { type: "question"; index: number }
-  | { type: "evaluate"; date: string }
+  | { type: "assessed"; energy: number; scenario: Scenario }
   | { type: "scenario"; scenario: Scenario }
   | { type: "start"; id: string }
   | { type: "finish" }
   | { type: "feedback"; value: Partial<Feedback> }
-  | { type: "submit-feedback"; date: string }
+  | { type: "feedback-saved"; before: number | null; after: number }
   | { type: "reset" };
 
-// These rules simulate UI behavior only. They are not a clinical scoring instrument.
+// Scores and scenarios come from the backend; these rules only keep the UI in sync.
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "profile":
       return { ...state, profile: action.profile };
+    case "progress": {
+      const { progress } = action;
+      const scenario: Scenario =
+        progress.scenario === "CALM"
+          ? "calm"
+          : progress.scenario === "VITALITY"
+            ? "vitality"
+            : state.scenario;
+      return {
+        ...state,
+        energy: progress.currentEnergy ?? DEFAULT_ENERGY,
+        scenario,
+        completed: progress.completedActivityIds,
+        currentExerciseId: libraryItems(scenario).some(
+          (e) => e.id === state.currentExerciseId,
+        )
+          ? state.currentExerciseId
+          : protocolItems(scenario)[0].id,
+        history: progress.history,
+        weeklyEnergy: progress.weeklyEnergy,
+        summary: progress.summary,
+      };
+    }
     case "answer": {
       if (
         action.index < 0 ||
@@ -131,37 +152,19 @@ export function reducer(state: AppState, action: Action): AppState {
         ...state,
         question: Math.max(0, Math.min(questions.length - 1, action.index)),
       };
-    case "evaluate": {
-      if (state.answers.some((v) => v === null)) return state;
-      const energy = Math.round(
-        (state.answers.reduce<number>((sum, value) => sum + (value ?? 0), 0) /
-          (questions.length * 4)) *
-          100,
-      );
-      const scenario: Scenario = energy > 80 ? "calm" : "vitality";
+    case "assessed":
+      // A new assessment restarts the protocol.
       return {
         ...state,
-        energy,
-        scenario,
+        energy: action.energy,
+        scenario: action.scenario,
         completed: [],
-        currentExerciseId: protocolItems(scenario)[0].id,
-        history: [
-          ...state.history,
-          {
-            id: `assessment-${state.history.length}`,
-            date: action.date,
-            value: energy,
-            kind: "assessment",
-          },
-        ],
+        currentExerciseId: protocolItems(action.scenario)[0].id,
       };
-    }
     case "scenario":
       return {
         ...state,
         scenario: action.scenario,
-        energy: action.scenario === "calm" ? 90 : 38,
-        completed: [],
         currentExerciseId: protocolItems(action.scenario)[0].id,
       };
     case "start":
@@ -172,34 +175,13 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, before: state.energy, feedback: { note: "" } };
     case "feedback":
       return { ...state, feedback: { ...state.feedback, ...action.value } };
-    case "submit-feedback": {
-      if (!isFeedbackComplete(state.feedback)) return state;
-      const energy = [10, 30, 50, 70, 90][state.feedback.energy!];
+    case "feedback-saved":
       return {
         ...state,
-        energy,
+        before: action.before ?? state.before,
+        energy: action.after,
         completed: [...new Set([...state.completed, state.currentExerciseId])],
-        history: [
-          ...state.history,
-          {
-            id: `feedback-${state.history.length}`,
-            date: action.date,
-            value: energy,
-            kind: "feedback",
-          },
-        ],
-        feedbackHistory: [
-          ...state.feedbackHistory,
-          {
-            ...state.feedback,
-            before: state.before,
-            after: energy,
-            exerciseId: state.currentExerciseId,
-            date: action.date,
-          },
-        ],
       };
-    }
     case "reset":
       return initialState();
   }
