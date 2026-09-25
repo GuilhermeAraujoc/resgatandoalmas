@@ -3,12 +3,13 @@ import { apiEases, apiEnergyLevels, apiFeelings, type FeedbackDto } from "./dto"
 import type { Feedback } from "../types";
 
 /** Sends a complete feedback form; the backend also records the activity as completed. */
-export async function createFeedback(activityId: string, feedback: Feedback) {
+export async function createFeedback(activityId: string, feedback: Feedback, contentReleaseId: string) {
   const { feedback: saved } = await request<{ feedback: FeedbackDto }>(
     "POST",
     "/feedbacks",
     {
       activityId,
+      contentReleaseId,
       energyLevel: apiEnergyLevels[feedback.energy!],
       feeling: apiFeelings[feedback.feeling!],
       ease: apiEases[feedback.ease!],

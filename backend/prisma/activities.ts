@@ -1,4 +1,4 @@
-import { Scenario, type Prisma } from "../src/generated/prisma/client.js";
+import { Scenario, type Prisma } from "../src/generated/db/client.js";
 
 // Copied from frontend/src/data/catalog.ts (ids must stay in sync).
 export const activities: Prisma.ActivityCreateInput[] = [

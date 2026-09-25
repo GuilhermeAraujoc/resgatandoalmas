@@ -1,0 +1,13 @@
+CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN');
+ALTER TABLE "User" ADD COLUMN "role" "UserRole" NOT NULL DEFAULT 'USER', ADD COLUMN "blockedAt" TIMESTAMP(3), ADD COLUMN "lastLoginAt" TIMESTAMP(3);
+ALTER TABLE "User" ALTER COLUMN "cpf" DROP NOT NULL;
+CREATE TABLE "ContentDraft" ("id" TEXT NOT NULL, "revision" INTEGER NOT NULL DEFAULT 1, "data" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "ContentDraft_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "ContentRelease" ("id" TEXT NOT NULL, "version" INTEGER NOT NULL, "data" JSONB NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "ContentRelease_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "ContentRelease_version_key" ON "ContentRelease"("version");
+ALTER TABLE "Assessment" ADD COLUMN "contentReleaseId" TEXT, ADD COLUMN "answerSnapshot" JSONB;
+ALTER TABLE "UserActivity" ADD COLUMN "contentReleaseId" TEXT, ADD COLUMN "activitySnapshot" JSONB;
+ALTER TABLE "Assessment" ADD CONSTRAINT "Assessment_contentReleaseId_fkey" FOREIGN KEY ("contentReleaseId") REFERENCES "ContentRelease"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "UserActivity" ADD CONSTRAINT "UserActivity_contentReleaseId_fkey" FOREIGN KEY ("contentReleaseId") REFERENCES "ContentRelease"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE TABLE "AdminAudit" ("id" TEXT NOT NULL, "actorId" TEXT NOT NULL, "action" TEXT NOT NULL, "targetId" TEXT, "reason" TEXT, "fields" TEXT[] NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "AdminAudit_pkey" PRIMARY KEY ("id"));
+CREATE INDEX "AdminAudit_createdAt_idx" ON "AdminAudit"("createdAt");
+CREATE INDEX "AdminAudit_actorId_createdAt_idx" ON "AdminAudit"("actorId", "createdAt");

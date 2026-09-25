@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { Ease, EnergyLevel, Feeling } from "../generated/prisma/enums.js";
+import { Ease, EnergyLevel, Feeling } from "../generated/db/enums.js";
 
 export const createFeedbackSchema = z.strictObject({
+  contentReleaseId: z.string().min(1).max(64),
   activityId: z.string().trim().min(1).max(64),
   energyLevel: z.enum(EnergyLevel),
   feeling: z.enum(Feeling),

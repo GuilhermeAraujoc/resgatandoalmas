@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:bootstrap": "tsx src/scripts/admin-bootstrap.ts",
+    "test": "tsx --test tests/*.test.ts"
   },
   "keywords": [],
   "author": "",

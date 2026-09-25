@@ -1,3 +1,4 @@
+import type { Catalog } from "../types";
 // Response shapes of the backend API and the enum values it uses.
 
 export const apiEnergyLevels = [
@@ -26,6 +27,7 @@ export type ApiEnergyLevel = (typeof apiEnergyLevels)[number];
 export type ApiScenario = "VITALITY" | "CALM";
 
 export interface UserDto {
+  role: "USER" | "ADMIN";
   id: string;
   name: string;
   email: string;
@@ -53,6 +55,7 @@ export interface FeedbackDto {
 }
 
 export interface ProgressDto {
+  protocolCatalog: Catalog | null;
   currentEnergy: number | null;
   scenario: ApiScenario | null;
   lastAssessmentAt: string | null;

@@ -15,7 +15,7 @@ export async function authenticate(
     if (token) clearSessionCookie(res);
     throw unauthorized();
   }
-  req.user = { id: session.userId, sessionId: session.id };
+  req.user = { id: session.userId, sessionId: session.id, role: session.user.role };
   next();
 }
 

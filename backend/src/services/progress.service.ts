@@ -1,3 +1,4 @@
+import { contentService, visibleCatalog } from "./content.service.js";
 import { env } from "../config/env.js";
 import { assessmentRepository } from "../repositories/assessment.repository.js";
 import { feedbackRepository } from "../repositories/feedback.repository.js";
@@ -7,8 +8,8 @@ import { addDays, dayKey, weekKeys } from "../lib/dates.js";
 
 /** How many recent assessments/feedbacks/activities the progress payload lists. */
 const RECENT_LIMIT = 50;
-/** Completion dates older than this are not needed for the week or the streak. */
-const STREAK_WINDOW_DAYS = 400;
+/** Covers the current calendar year/week in any client timezone and the streak. */
+const HISTORY_WINDOW_DAYS = 400;
 
 interface EnergyRecord {
   id: string;
@@ -33,36 +34,53 @@ export const progressService = {
     const tz = env.APP_TIMEZONE;
     const today = dayKey(new Date(), tz);
     const week = weekKeys(today);
-    const since = new Date(Date.now() - STREAK_WINDOW_DAYS * 86_400_000);
+    const since = new Date(Date.now() - HISTORY_WINDOW_DAYS * 86_400_000);
 
-    const [latestAssessment, assessments, feedbacks, activities, totalCompleted, completions] =
-      await Promise.all([
-        assessmentRepository.findLatest(userId),
-        assessmentRepository.findRecent(userId, RECENT_LIMIT),
-        feedbackRepository.findRecent(userId, RECENT_LIMIT),
-        userActivityRepository.findRecent(userId, RECENT_LIMIT),
-        userActivityRepository.count(userId),
-        userActivityRepository.completionDates(userId, since),
-      ]);
+    const [
+      latestAssessment,
+      assessments,
+      feedbacks,
+      activities,
+      totalCompleted,
+      completions,
+      chartAssessments,
+      chartFeedbacks,
+    ] = await Promise.all([
+      assessmentRepository.findLatest(userId),
+      assessmentRepository.findRecent(userId, RECENT_LIMIT),
+      feedbackRepository.findRecent(userId, RECENT_LIMIT),
+      userActivityRepository.findRecent(userId, RECENT_LIMIT),
+      userActivityRepository.count(userId),
+      userActivityRepository.completionDates(userId, since),
+      assessmentRepository.findEnergySince(userId, since),
+      feedbackRepository.findEnergySince(userId, since),
+    ]);
     // The protocol restarts with every assessment, so only later completions count.
     const completedActivityIds = await userActivityRepository.completedActivityIds(
       userId,
       latestAssessment?.createdAt ?? null,
     );
 
-    const history: EnergyRecord[] = [
-      ...assessments.map((a) => ({
+    const energyRecords: EnergyRecord[] = [
+      ...[...assessments, ...chartAssessments].map((a) => ({
         id: a.id,
         date: a.createdAt.toISOString(),
         value: a.energyScore,
         kind: "assessment" as const,
       })),
-      ...feedbacks.map((f) => ({
+      ...[...feedbacks, ...chartFeedbacks].map((f) => ({
         id: f.id,
         date: f.createdAt.toISOString(),
         value: feedbackEnergy(f.energyLevel),
         kind: "feedback" as const,
       })),
+    ];
+    // Recent records preserve the latest value for inactive users; the time window
+    // includes every chart record even when users submit more than 50 per year.
+    const history = [
+      ...new Map(
+        energyRecords.map((record) => [`${record.kind}:${record.id}`, record]),
+      ).values(),
     ].sort((a, b) => a.date.localeCompare(b.date));
 
     const lastValueByDay = new Map<string, number>();
@@ -78,7 +96,9 @@ export const progressService = {
       day = addDays(day, -1);
     }
 
+    const protocolCatalog = latestAssessment?.contentReleaseId ? visibleCatalog(await contentService.get(latestAssessment.contentReleaseId)) : null;
     return {
+      protocolCatalog,
       currentEnergy: history.at(-1)?.value ?? null,
       scenario: latestAssessment?.scenario ?? null,
       lastAssessmentAt: latestAssessment?.createdAt.toISOString() ?? null,
@@ -96,13 +116,13 @@ export const progressService = {
       activities: activities.map((a) => ({
         id: a.id,
         activityId: a.activityId,
-        name: a.activity.name,
+        name: (a.activitySnapshot as { name?: string } | null)?.name ?? a.activity.name,
         completedAt: a.completedAt.toISOString(),
       })),
       feedbacks: feedbacks.map((f) => ({
         id: f.id,
         activityId: f.userActivity.activityId,
-        activityName: f.userActivity.activity.name,
+        activityName: (f.userActivity.activitySnapshot as { name?: string } | null)?.name ?? f.userActivity.activity.name,
         energyLevel: f.energyLevel,
         feeling: f.feeling,
         ease: f.ease,

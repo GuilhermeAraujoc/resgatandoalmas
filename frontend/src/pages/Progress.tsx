@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useApp } from "../state/AppContext";
 import { energyLabel } from "../state/model";
+import { buildEnergyChart, type EnergyChartPeriod } from "../lib/energyChart";
 import {
   Badge,
   Button,
@@ -11,6 +13,8 @@ import {
 } from "../components/ui";
 export function Progress() {
   const { state, navigate } = useApp();
+  const [period, setPeriod] = useState<EnergyChartPeriod>("day");
+  const chart = buildEnergyChart(state.history, period);
   const assessments = state.history.filter(
     (record) => record.kind === "assessment",
   );
@@ -46,13 +50,29 @@ export function Progress() {
         ))}
       </div>
       <Card style={{ marginTop: 22 }}>
-        <div className="cardhead">
+        <div className="cardhead chart-cardhead">
           <h2>Evolução do nível de energia</h2>
-          <Badge>Últimos registros</Badge>
+          <div className="chart-controls">
+            <Badge>Últimos registros</Badge>
+            <label className="chart-period">
+              <span className="sr-only">Período do gráfico de evolução</span>
+              <select
+                value={period}
+                onChange={(event) => setPeriod(event.target.value as EnergyChartPeriod)}
+              >
+                <option value="day">Dia</option>
+                <option value="week">Semana</option>
+                <option value="month">Mês</option>
+                <option value="year">Ano</option>
+              </select>
+            </label>
+          </div>
         </div>
-        <EnergyChart records={state.history} />
+        <p className="small muted" aria-live="polite">{chart.rangeLabel}</p>
+        <EnergyChart records={state.history} period={period} />
         <p className="small muted">
-          Eixo horizontal: dias da semana. Eixo vertical: índice ilustrativo de
+          {chart.description} Intervalos sem registros ficam sem pontos.
+          {" "}Eixo vertical: índice ilustrativo de
           0 a 100, organizado a partir dos relatos de bem-estar. Não representa
           uma medida clínica.
         </p>

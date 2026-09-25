@@ -10,14 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import { initialState, profileFromUser, reducer, type Action } from "./model";
-import { useHashRoute } from "../hooks/useHashRoute";
+import { usePathRoute } from "../hooks/usePathRoute";
+import { request } from "../services/api";
 import { ApiError } from "../services/api";
 import * as authApi from "../services/auth";
 import * as meApi from "../services/me";
 import { createAssessment } from "../services/assessments";
 import { createFeedback } from "../services/feedbacks";
 import type { UserDto } from "../services/dto";
-import type { AppState, ModalKind, Route } from "../types";
+import type { AppState, ModalKind, Route, Catalog } from "../types";
 
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
@@ -36,7 +37,7 @@ interface ContextValue {
   notify: (text: string) => void;
   startExercise: (id: string) => void;
   authStatus: AuthStatus;
-  login: (input: authApi.LoginInput) => Promise<void>;
+  login: (input: authApi.LoginInput) => Promise<UserDto>;
   register: (input: authApi.RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -47,10 +48,11 @@ interface ContextValue {
 const AppContext = createContext<ContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
-  const { route, navigate } = useHashRoute();
+  const { route, navigate } = usePathRoute();
   const [modal, setModal] = useState<ModalKind | null>(null);
   const [toast, setToast] = useState("");
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
+  const sessionVersion = useRef(0);
   const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const notify = useCallback((text: string) => {
     clearTimeout(timeout.current);
@@ -68,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const endSession = useCallback(() => {
+    sessionVersion.current++;
     dispatch({ type: "reset" });
     setAuthStatus("anonymous");
   }, []);
@@ -92,22 +95,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [refreshProgress]);
   const startSession = useCallback(
     async (user: UserDto) => {
+      const version = ++sessionVersion.current;
+      const [catalog, progress] = await Promise.all([
+        authed(() => request<Catalog>("GET", "/catalog")),
+        authed(meApi.getProgress),
+      ]).catch(error => {
+        if (version === sessionVersion.current) endSession();
+        throw error;
+      });
+      if (version !== sessionVersion.current) return;
       dispatch({ type: "reset" });
-      dispatch({ type: "profile", profile: profileFromUser(user) });
-      await refreshProgress();
+      dispatch({ type: "profile", profile: profileFromUser(user), role: user.role });
+      dispatch({ type: "catalog", catalog });
+      dispatch({ type: "progress", progress });
       setAuthStatus("authenticated");
     },
-    [refreshProgress],
+    [authed, endSession],
   );
 
   // Restore the session from the cookie on first load.
   useEffect(() => {
     let active = true;
+    const version = sessionVersion.current;
     meApi
       .getMe()
-      .then(({ user }) => (active ? startSession(user) : undefined))
+      .then(({ user }) => (active && version === sessionVersion.current ? startSession(user) : undefined))
       .catch(() => {
-        if (active) setAuthStatus("anonymous");
+        if (active && version === sessionVersion.current) setAuthStatus("anonymous");
       });
     return () => {
       active = false;
@@ -118,15 +132,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
       navigate("login");
   }, [authStatus, route, navigate]);
 
+  useEffect(() => {
+    if (authStatus !== "authenticated" || route !== "assessment") return;
+    let active = true;
+    request<Catalog>("GET", "/catalog")
+      .then(catalog => { if (active) dispatch({ type: "catalog", catalog }); })
+      .catch(error => {
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 401) endSession();
+        else notify("Não foi possível atualizar o questionário. A versão carregada continua disponível.");
+      });
+    return () => { active = false; };
+  }, [authStatus, route, endSession, notify]);
+
   const login = useCallback(
     async (input: authApi.LoginInput) => {
+      sessionVersion.current++;
       const { user } = await authApi.login(input);
       await startSession(user);
+      return user;
     },
     [startSession],
   );
   const register = useCallback(
     async (input: authApi.RegisterInput) => {
+      sessionVersion.current++;
       const { user } = await authApi.register(input);
       await startSession(user);
     },
@@ -150,23 +180,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [authed],
   );
   const submitAssessment = useCallback(async () => {
+    if (!state.catalog) throw new ApiError(409, "Recarregue o catálogo antes de responder.");
     const assessment = await authed(() =>
-      createAssessment(state.answers as number[]),
+      createAssessment(state.answers as number[], state.catalog!),
     );
     dispatch({
       type: "assessed",
       energy: assessment.energyScore,
       scenario: assessment.scenario === "CALM" ? "calm" : "vitality",
     });
-    syncProgress();
-  }, [authed, state.answers, syncProgress]);
+    await refreshProgress();
+  }, [authed, state.answers, state.catalog, refreshProgress]);
   const submitFeedback = useCallback(async () => {
+    const catalog = state.protocolCatalog ?? state.catalog;
+    if (!catalog) throw new ApiError(409, "Recarregue o catálogo antes de continuar.");
     const saved = await authed(() =>
-      createFeedback(state.currentExerciseId, state.feedback),
+      createFeedback(state.currentExerciseId, state.feedback, catalog.id),
     );
     dispatch({ type: "feedback-saved", before: saved.before, after: saved.after });
     syncProgress();
-  }, [authed, state.currentExerciseId, state.feedback, syncProgress]);
+  }, [authed, state.currentExerciseId, state.feedback, state.protocolCatalog, state.catalog, syncProgress]);
 
   return (
     <AppContext.Provider

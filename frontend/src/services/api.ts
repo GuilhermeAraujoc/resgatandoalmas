@@ -27,7 +27,7 @@ export async function request<T>(
       method,
       credentials: "include",
       signal: AbortSignal.timeout(15000),
-      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      headers: { "X-Requested-With": "ResgatandoAlmas", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {

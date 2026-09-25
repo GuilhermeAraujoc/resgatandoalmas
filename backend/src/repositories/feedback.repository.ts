@@ -1,5 +1,6 @@
+import type { Prisma } from "../generated/db/client.js";
 import { prisma } from "../lib/prisma.js";
-import type { Ease, EnergyLevel, Feeling } from "../generated/prisma/enums.js";
+import type { Ease, EnergyLevel, Feeling } from "../generated/db/enums.js";
 
 const feedbackSelect = {
   id: true,
@@ -11,7 +12,7 @@ const feedbackSelect = {
   energyBefore: true,
   createdAt: true,
   userActivity: {
-    select: { activityId: true, activity: { select: { name: true } } },
+    select: { activityId: true, activitySnapshot: true, contentReleaseId: true, activity: { select: { name: true } } },
   },
 } as const;
 
@@ -20,6 +21,8 @@ export const feedbackRepository = {
   createWithCompletion: (data: {
     userId: string;
     activityId: string;
+    contentReleaseId: string;
+    activitySnapshot: Prisma.InputJsonValue;
     energyLevel: EnergyLevel;
     feeling: Feeling;
     ease: Ease;
@@ -27,12 +30,14 @@ export const feedbackRepository = {
     note: string | null;
     energyBefore: number | null;
   }) => {
-    const { userId, activityId, ...feedback } = data;
+    const { userId, activityId, contentReleaseId, activitySnapshot, ...feedback } = data;
     return prisma.userActivity
       .create({
         data: {
           userId,
           activityId,
+          contentReleaseId,
+          activitySnapshot,
           feedback: { create: { userId, ...feedback } },
         },
         select: { feedback: { select: feedbackSelect } },
@@ -53,5 +58,12 @@ export const feedbackRepository = {
       orderBy: { createdAt: "desc" },
       take,
       select: feedbackSelect,
+    }),
+
+  findEnergySince: (userId: string, since: Date) =>
+    prisma.feedback.findMany({
+      where: { userId, createdAt: { gte: since } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, energyLevel: true, createdAt: true },
     }),
 };

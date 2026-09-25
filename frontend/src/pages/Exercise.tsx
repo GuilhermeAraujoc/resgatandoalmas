@@ -5,11 +5,11 @@ import { Button, Card, Notice, PageHeader } from "../components/ui";
 export function Exercise() {
   const { state, dispatch, navigate } = useApp();
   const exercise =
-    libraryItems(state.scenario).find(
+    libraryItems(state.scenario, state.protocolCatalog ?? state.catalog).find(
       (item) => item.id === state.currentExerciseId,
-    ) ?? protocolItems(state.scenario)[0];
-  const index = protocolItems(state.scenario).findIndex(
-    (item) => item.id === exercise.id,
+    ) ?? protocolItems(state.scenario, state.protocolCatalog ?? state.catalog)[0];
+  const index = protocolItems(state.scenario, state.protocolCatalog ?? state.catalog).findIndex(
+    (item) => item.id === exercise?.id,
   );
   const timer = useCountdown((exercise?.time ?? 0) * 60);
   if (!exercise) return <Card>Nenhum exercício disponível.</Card>;
@@ -18,9 +18,9 @@ export function Exercise() {
     <>
       <PageHeader
         title={exercise.name}
-        subtitle={`${index >= 0 ? `Exercício ${index + 1} de ${protocolItems(state.scenario).length}` : "Prática complementar"} · ${exercise.time} minutos · Fácil`}
+        subtitle={`${index >= 0 ? `Exercício ${index + 1} de ${protocolItems(state.scenario, state.protocolCatalog ?? state.catalog).length}` : "Prática complementar"} · ${exercise.time} minutos · Fácil`}
         extra={
-          <a className="textlink" href="#protocol">
+          <a className="textlink" href="/protocol">
             Voltar ao protocolo
           </a>
         }

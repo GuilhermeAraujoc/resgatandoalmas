@@ -11,6 +11,7 @@ import {
 export function Protocol() {
   const { state, startExercise } = useApp();
   const calm = state.scenario === "calm";
+  const protocol = (state.protocolCatalog ?? state.catalog)?.protocols[calm ? "calm" : "vitality"];
   return (
     <>
       <PageHeader
@@ -22,13 +23,11 @@ export function Protocol() {
           <div>
             <span className="eyebrow">Protocolo de equilíbrio energético</span>
             <h2 style={{ margin: "14px 0" }}>
-              {calm ? "Presença e serenidade" : "Chakra Sacro · Svadhisthana"}
+              {protocol?.name ?? "Seu protocolo"}
             </h2>
             <p>
               Objetivo:{" "}
-              {calm
-                ? "desacelerar e direcionar sua energia."
-                : "explorar movimento, criatividade e vitalidade."}
+              {protocol?.description}
             </p>
           </div>
           <EnergyLevelIndicator value={state.energy} circular />
@@ -51,7 +50,7 @@ export function Protocol() {
       </Card>
       <h2 className="section-label">O que você deve fazer</h2>
       <div className="stack steps">
-        {protocolItems(state.scenario).map((exercise, index) => {
+        {protocolItems(state.scenario, state.protocolCatalog ?? state.catalog).map((exercise, index) => {
           const done = state.completed.includes(exercise.id);
           return (
             <Card key={exercise.id}>

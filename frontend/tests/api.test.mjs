@@ -18,6 +18,13 @@ const bundle = await rolldown({
 const { output } = await bundle.generate({ format: 'esm' });
 await bundle.close();
 const { api, model } = await import(`data:text/javascript;base64,${Buffer.from(output[0].code).toString('base64')}`);
+const catalog = {
+  id: 'release-1', version: 1, calmAbove: 80,
+  questions: [{ id: 'q1', text: 'Como está?', topic: 'Bem-estar', active: true, options: Array.from({ length: 5 }, (_, i) => ({ label: String(i), score: i * 25, active: true })) }],
+  exercises: [{ id: 'exercises-0', active: true, name: 'Respiração', time: 3, cat: 'Respiração', desc: 'Pausa', icon: 'wind', art: 'green', steps: ['Respire'], videoId: '' }],
+  protocols: { vitality: { name: 'Vitalidade', description: 'Pausa', exerciseIds: ['exercises-0'] }, calm: { name: 'Calma', description: 'Pausa', exerciseIds: ['exercises-0'] } },
+};
+const withCatalog = () => model.reducer(model.initialState(), { type: 'catalog', catalog });
 const originalFetch = globalThis.fetch;
 after(() => { globalThis.fetch = originalFetch; });
 
@@ -43,7 +50,7 @@ test('backend progress preserves missing evaluations and real scores', () => {
   assert.equal(empty.energy, null);
   assert.equal(empty.scenario, null);
   assert.equal(empty.currentExerciseId, '');
-  const saved = model.reducer(empty, { type: 'progress', progress: { ...progress, currentEnergy: 0, scenario: 'VITALITY' } });
+  const saved = model.reducer(withCatalog(), { type: 'progress', progress: { ...progress, currentEnergy: 0, scenario: 'VITALITY', protocolCatalog: catalog } });
   assert.equal(saved.energy, 0);
   assert.equal(saved.scenario, 'vitality');
   assert.equal(saved.currentExerciseId, 'exercises-0');
@@ -55,7 +62,7 @@ test('backend progress preserves missing evaluations and real scores', () => {
 test('reset clears previous user data; drafts do not invent saved results', () => {
   const state = { ...model.initialState(), profile: { name: 'Usuário de teste', email: 'test@example.com', phone: '', birth: '' }, energy: 80 };
   assert.deepEqual(model.reducer(state, { type: 'reset' }), model.initialState());
-  const draft = model.reducer(model.initialState(), { type: 'answer', index: 0, value: 4 });
+  const draft = model.reducer(withCatalog(), { type: 'answer', index: 0, value: 4 });
   assert.equal(draft.answers[0], 4);
   assert.equal(draft.energy, null);
   assert.deepEqual(draft.history, []);
@@ -81,4 +88,17 @@ test('API fails explicitly on unauthorized, unavailable, invalid JSON and networ
   await assert.rejects(api.request('GET', '/me'), /resposta inválida/);
   globalThis.fetch = async () => { throw new TypeError('network'); };
   await assert.rejects(api.request('GET', '/me'), error => error.status === 0);
+});
+
+
+test('catalog updates preserve assigned protocol versions and exclude inactive content', () => {
+  const previous = { ...withCatalog(), scenario: 'vitality', protocolCatalog: catalog };
+  const nextCatalog = structuredClone(catalog);
+  nextCatalog.id = 'release-2';
+  nextCatalog.exercises[0].name = 'Nova respiração';
+  nextCatalog.questions[0].options[4].active = false;
+  const next = model.reducer(previous, { type: 'catalog', catalog: nextCatalog });
+  assert.equal(model.protocolItems(next.scenario, next.protocolCatalog)[0].name, 'Respiração');
+  assert.equal(model.reducer(next, { type: 'answer', index: 0, value: 4 }).answers[0], null);
+  assert.equal(model.libraryItems(null, null).length, 0);
 });

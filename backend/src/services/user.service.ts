@@ -1,7 +1,7 @@
 import { userRepository } from "../repositories/user.repository.js";
-import { conflict, notFound } from "../lib/errors.js";
+import { conflict, notFound, forbidden } from "../lib/errors.js";
 import { formatDateOnly, parseDateOnly } from "../lib/dates.js";
-import type { Prisma, User } from "../generated/prisma/client.js";
+import type { Prisma, User } from "../generated/db/client.js";
 import type { UpdateProfileInput } from "../validation/user.schemas.js";
 
 export function toUserDto(user: User) {
@@ -9,7 +9,8 @@ export function toUserDto(user: User) {
     id: user.id,
     name: user.name,
     email: user.email,
-    cpf: user.cpf,
+    cpf: user.cpf ?? "",
+    role: user.role,
     phone: user.phone,
     birthDate: user.birthDate ? formatDateOnly(user.birthDate) : null,
     createdAt: user.createdAt.toISOString(),
@@ -50,6 +51,8 @@ export const userService = {
   },
 
   async deleteAccount(userId: string) {
+    const user = await userRepository.findById(userId);
+    if (user?.role === "ADMIN") throw forbidden("Contas administrativas são gerenciadas pelo operador do sistema.");
     await userRepository.delete(userId);
   },
 };

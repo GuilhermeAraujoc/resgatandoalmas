@@ -13,14 +13,14 @@ import {
 } from "../components/ui";
 export function Home() {
   const { state, navigate, startExercise } = useApp();
-  const protocol = protocolItems(state.scenario);
+  const protocol = protocolItems(state.scenario, state.protocolCatalog ?? state.catalog);
   const done = protocol.filter((e) => state.completed.includes(e.id)).length;
   const next =
     protocol.find((e) => !state.completed.includes(e.id)) ?? protocol[0];
   const activeDays = state.summary.activeDaysThisWeek;
   const activeCount = activeDays.filter(Boolean).length;
   const todayIndex = (new Date().getDay() + 6) % 7;
-  const calm = state.scenario === "calm";
+  const protocolInfo = state.scenario ? (state.protocolCatalog ?? state.catalog)?.protocols[state.scenario] : null;
   const date = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -87,21 +87,9 @@ export function Home() {
           </div>
           <span className="eyebrow">Cuidado personalizado</span>
           <h2 style={{ marginTop: 9 }}>
-            {calm ? (
-              "Presença e serenidade"
-            ) : (
-              <>
-                Equilíbrio do
-                <br />
-                Chakra Sacro
-              </>
-            )}
+            {protocolInfo?.name}
           </h2>
-          <p>
-            {calm
-              ? "Desaceleração, organização e presença."
-              : "Movimento, criatividade e vitalidade."}
-          </p>
+          <p>{protocolInfo?.description}</p>
           <div className="between progress-text">
             <span>{done} de {protocol.length} atividades concluídas</span>
             <span>{Math.round(protocol.length ? (done / protocol.length) * 100 : 0)}%</span>
@@ -141,7 +129,7 @@ export function Home() {
             <br />
             Vamos observar como você está hoje?
           </p>
-          <a className="textlink" href="#assessment">
+          <a className="textlink" href="/assessment">
             Refazer avaliação <Icon name="arrow" />
           </a>
         </Card>

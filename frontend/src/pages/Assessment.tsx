@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../state/AppContext";
-import { questions } from "../data/catalog";
-import { energyLabel, energyLevels } from "../state/model";
+import { energyLabel } from "../state/model";
 import {
   Button,
   Card,
@@ -12,22 +11,9 @@ import {
   ProgressBar,
 } from "../components/ui";
 import { errorMessage } from "../services/api";
-const topics = [
-  "Disposição",
-  "Motivação",
-  "Criatividade",
-  "Novos caminhos",
-  "Bem-estar",
-  "Realização",
-  "Pensamentos",
-  "Experiências",
-  "Rotina",
-  "Movimento",
-  "Emoções",
-  "Equilíbrio",
-];
 export function Assessment() {
   const { state, dispatch, navigate, notify, submitAssessment } = useApp();
+  const questions = state.catalog?.questions.filter(question => question.active) ?? [];
   const [pending, setPending] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -48,6 +34,7 @@ export function Assessment() {
       setPending(false);
     }
   };
+  if (!questions.length) return <Card>Nenhuma avaliação disponível no momento.</Card>;
   return (
     <div className="assessment">
       <PageHeader
@@ -67,12 +54,12 @@ export function Assessment() {
         />
       </div>
       <Card className="questionbox">
-        <span className="eyebrow">{topics[state.question]}</span>
+        <span className="eyebrow">{questions[state.question]?.topic}</span>
         <h2 ref={title} tabIndex={-1} style={{ outline: "none" }}>
-          {questions[state.question]}
+          {questions[state.question]?.text}
         </h2>
         <div className="choices" role="radiogroup" aria-label="Sua resposta">
-          {energyLevels.map((level, index) => (
+          {questions[state.question].options.map(({ label: level, active }, index) => active && (
             <label
               key={level}
               className={`choice ${state.answers[state.question] === index ? "selected" : ""}`}
@@ -168,6 +155,7 @@ export function Analysis() {
 export function Result() {
   const { state, navigate } = useApp();
   const calm = state.scenario === "calm";
+  const protocol = (state.protocolCatalog ?? state.catalog)?.protocols[calm ? "calm" : "vitality"];
   return (
     <>
       <PageHeader
@@ -208,9 +196,7 @@ export function Result() {
           </p>
           <h3>Objetivo do seu protocolo</h3>
           <p className="muted small">
-            {calm
-              ? "Cultivar organização, calma e presença."
-              : "Estimular movimento, vitalidade, criatividade e expressão de forma gradual."}
+            {protocol?.description}
           </p>
         </Card>
       </div>

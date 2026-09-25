@@ -1,4 +1,4 @@
-import { EnergyLevel, Scenario } from "../generated/prisma/enums.js";
+import { EnergyLevel, Scenario } from "../generated/db/enums.js";
 
 // Mirrors the rules in frontend/src/state/model.ts. They simulate UI behavior
 // only and are not a clinical scoring instrument.

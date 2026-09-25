@@ -64,8 +64,9 @@ export const authService = {
       input.password,
       user?.passwordHash ?? DUMMY_HASH,
     );
-    if (!user || !valid) throw unauthorized("E-mail ou senha incorretos.");
+    if (!user || !valid || user.blockedAt) throw unauthorized("E-mail ou senha incorretos.");
 
+    await userRepository.update(user.id, { lastLoginAt: new Date() });
     await sessionRepository.deleteExpired(user.id);
     return {
       user: toUserDto(user),

@@ -18,7 +18,15 @@ npm run lint
 npm test
 ```
 
-Login: `http://localhost:5173/#login`.
+Login: `http://localhost:5173/login`.
+
+## Navegação
+
+As páginas usam caminhos como `/assessment` e `/progress`, com suporte aos botões
+voltar/avançar do navegador. Links antigos como `/#assessment` são convertidos.
+O Vite já atende essas rotas ao abrir ou recarregar uma página diretamente.
+Em produção, configure o servidor para servir `index.html` nas rotas do frontend
+(fallback de SPA), mantendo `/api` e arquivos estáticos em seus destinos próprios.
 
 ## API e sessão
 
@@ -68,13 +76,14 @@ não existem em `backend/src/routes/index.ts`:
 
 Essas operações mostram erro se o servidor não atender; não simulam sucesso.
 
-## Conteúdo local
+## Catálogo e administração
 
-Perguntas e catálogo de exercícios permanecem em `src/data/catalog.ts`. Os IDs
-precisam corresponder ao catálogo do backend. Os vídeos de exemplo foram removidos;
-preencha os `videoId` com os vídeos oficiais. O WhatsApp fica em `src/config.tsx`.
-Termos e política aguardam conteúdo definitivo. O Design System mantém amostras
-visuais isoladas; os gráficos das telas de usuário recebem o histórico da API.
+Perguntas, exercícios e protocolos vêm de `/api/catalog` e das versões atribuídas
+às avaliações. O catálogo local antigo não dirige mais os fluxos dos usuários.
+Administradores acessam `/admin` para editar rascunhos, publicar versões e consultar
+relatórios. Consulte [ADMIN.md](../ADMIN.md) para operação, permissões e inicialização.
+
+`src/config.tsx` mantém apenas as configurações públicas de apresentação.
 
 `npm test` verifica ausência de dados fictícios, mapeamento do progresso do backend,
 limpeza de estado, requisições autenticadas e tratamento de erros com respostas

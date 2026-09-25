@@ -28,6 +28,7 @@ export const userActivityRepository = {
       select: {
         id: true,
         activityId: true,
+        activitySnapshot: true,
         completedAt: true,
         activity: { select: { name: true } },
       },

@@ -1,12 +1,7 @@
-import {
-  exercises,
-  calmExercises,
-  extraExercises,
-  questions,
-} from "../data/catalog";
 import type { ProgressDto, UserDto } from "../services/dto";
 import type {
   AppState,
+  Catalog,
   EnergyLevel,
   Feedback,
   Profile,
@@ -36,11 +31,17 @@ export function energyLabel(value: number | null): EnergyLevel | "Sem avaliaçã
             : 4
   ];
 }
-export function protocolItems(scenario: Scenario | null) {
-  return scenario === null ? [] : scenario === "calm" ? calmExercises : exercises;
+export function protocolItems(scenario: Scenario | null, catalog?: Catalog | null) {
+  if (!scenario || !catalog) return [];
+  return catalog.protocols[scenario].exerciseIds.flatMap(id => {
+    const exercise = catalog.exercises.find(item => item.id === id && item.active);
+    return exercise ? [exercise] : [];
+  });
 }
-export function libraryItems(scenario: Scenario | null) {
-  return [...protocolItems(scenario), ...extraExercises];
+export function libraryItems(scenario: Scenario | null, catalog?: Catalog | null) {
+  if (!catalog) return [];
+  const assigned = new Set(Object.values(catalog.protocols).flatMap(protocol => protocol.exerciseIds));
+  return [...protocolItems(scenario, catalog), ...catalog.exercises.filter(item => item.active && !assigned.has(item.id))];
 }
 export const feedbackKeys: FeedbackKey[] = [
   "energy",
@@ -59,12 +60,15 @@ export function isFeedbackComplete(feedback: Feedback) {
 
 export function initialState(): AppState {
   return {
+    role: "USER",
+    catalog: null,
+    protocolCatalog: null,
     profile: { name: "", email: "", cpf: "", phone: "", birth: "" },
     energy: null,
     before: null,
     scenario: null,
     question: 0,
-    answers: Array(questions.length).fill(null),
+    answers: [],
     completed: [],
     currentExerciseId: "",
     feedback: { note: "" },
@@ -90,7 +94,8 @@ export function profileFromUser(user: UserDto): Profile {
 }
 
 export type Action =
-  | { type: "profile"; profile: Profile }
+  | { type: "profile"; profile: Profile; role?: "USER" | "ADMIN" }
+  | { type: "catalog"; catalog: Catalog }
   | { type: "progress"; progress: ProgressDto }
   | { type: "answer"; index: number; value: number }
   | { type: "question"; index: number }
@@ -106,7 +111,9 @@ export type Action =
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "profile":
-      return { ...state, profile: action.profile };
+      return { ...state, profile: action.profile, role: action.role ?? state.role };
+    case "catalog":
+      return { ...state, catalog: action.catalog, answers: action.catalog.id === state.catalog?.id ? state.answers : action.catalog.questions.filter(item => item.active).map(() => null), question: action.catalog.id === state.catalog?.id ? state.question : 0 };
     case "progress": {
       const { progress } = action;
       const scenario: Scenario | null =
@@ -117,14 +124,15 @@ export function reducer(state: AppState, action: Action): AppState {
             : null;
       return {
         ...state,
+        protocolCatalog: progress.protocolCatalog ?? null,
         energy: progress.currentEnergy,
         scenario,
         completed: progress.completedActivityIds,
-        currentExerciseId: libraryItems(scenario).some(
+        currentExerciseId: libraryItems(scenario, progress.protocolCatalog ?? state.catalog).some(
           (e) => e.id === state.currentExerciseId,
         )
           ? state.currentExerciseId
-          : protocolItems(scenario)[0]?.id ?? "",
+          : protocolItems(scenario, progress.protocolCatalog ?? state.catalog)[0]?.id ?? "",
         history: progress.history,
         weeklyEnergy: progress.weeklyEnergy,
         summary: progress.summary,
@@ -133,10 +141,10 @@ export function reducer(state: AppState, action: Action): AppState {
     case "answer": {
       if (
         action.index < 0 ||
-        action.index >= questions.length ||
+        action.index >= state.answers.length ||
         !Number.isInteger(action.value) ||
         action.value < 0 ||
-        action.value > 4
+        !state.catalog?.questions.filter(item => item.active)[action.index]?.options[action.value]?.active
       )
         return state;
       return {
@@ -149,7 +157,7 @@ export function reducer(state: AppState, action: Action): AppState {
     case "question":
       return {
         ...state,
-        question: Math.max(0, Math.min(questions.length - 1, action.index)),
+        question: Math.max(0, Math.min(state.answers.length - 1, action.index)),
       };
     case "assessed":
       // A new assessment restarts the protocol.
@@ -158,16 +166,16 @@ export function reducer(state: AppState, action: Action): AppState {
         energy: action.energy,
         scenario: action.scenario,
         completed: [],
-        currentExerciseId: protocolItems(action.scenario)[0].id,
+        currentExerciseId: protocolItems(action.scenario, state.catalog)[0]?.id ?? "",
       };
     case "scenario":
       return {
         ...state,
         scenario: action.scenario,
-        currentExerciseId: protocolItems(action.scenario)[0].id,
+        currentExerciseId: protocolItems(action.scenario, state.catalog)[0]?.id ?? "",
       };
     case "start":
-      return libraryItems(state.scenario).some((e) => e.id === action.id)
+      return libraryItems(state.scenario, state.protocolCatalog ?? state.catalog).some((e) => e.id === action.id)
         ? { ...state, currentExerciseId: action.id }
         : state;
     case "finish":

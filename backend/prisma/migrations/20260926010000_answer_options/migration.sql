@@ -1,0 +1,1 @@
+ALTER TABLE "AssessmentAnswer" ALTER COLUMN "level" DROP NOT NULL, ADD COLUMN IF NOT EXISTS "selectedOptionIndex" INTEGER;

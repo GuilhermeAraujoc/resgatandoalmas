@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useApp } from "../state/AppContext";
 import type { Route } from "../types";
 import { Icon, Logo } from "./ui";
+import { ThemeToggle } from "./ThemeToggle";
 const navigation: {
   route: Route;
   label: string;
@@ -32,7 +33,7 @@ const navigation: {
   { route: "profile", label: "Perfil", icon: "user", mobile: "Perfil" },
 ];
 export function Layout({ children }: { children: ReactNode }) {
-  const { state, route, openModal, notify, logout } = useApp();
+  const { state, route, openModal, logout } = useApp();
   const initials = state.profile.name
     .trim()
     .split(/\s+/)
@@ -43,12 +44,13 @@ export function Layout({ children }: { children: ReactNode }) {
     <>
       <aside className="sidebar">
         <Logo />
+        {state.role === "ADMIN" && <nav className="nav admin-entry"><a href="/admin" className={route === "admin" ? "active" : ""}><Icon name="shield" />Administração</a></nav>}
         <div className="nav-label">SEU ACOMPANHAMENTO</div>
         <nav className="nav" aria-label="Navegação principal">
           {navigation.map((item) => (
             <a
               key={item.route}
-              href={`#${item.route}`}
+              href={`/${item.route}`}
               className={route === item.route ? "active" : ""}
               aria-current={route === item.route ? "page" : undefined}
             >
@@ -64,18 +66,12 @@ export function Layout({ children }: { children: ReactNode }) {
             pequenos cuidados de hoje.
           </div>
           <nav className="nav">
-            <a
-              href="#login"
-              onClick={(event) => {
-                event.preventDefault();
-                void logout();
-              }}
-            >
+            <button onClick={() => void logout()}>
               <Icon name="logout" />
               Sair
-            </a>
+            </button>
           </nav>
-          <a href="#profile" className="side-profile">
+          <a href="/profile" className="side-profile">
             <span className="avatar">{initials}</span>
             <span>
               <strong className="small">{state.profile.name}</strong>
@@ -95,19 +91,9 @@ export function Layout({ children }: { children: ReactNode }) {
           </span>
           <Logo />
           <div className="top-right">
-            <span className="demo">DEMONSTRAÇÃO</span>
-            <button
-              className="notify"
-              aria-label="Notificações"
-              onClick={() =>
-                notify(
-                  "Seu próximo momento de cuidado está disponível no protocolo.",
-                )
-              }
-            >
-              <Icon name="bell" />
-            </button>
-            <a href="#profile" className="avatar" aria-label="Abrir meu perfil">
+            {state.role === "ADMIN" && <a href="/admin" className="admin-mobile-link" aria-label="Abrir administração"><Icon name="shield" /></a>}
+            <ThemeToggle />
+            <a href="/profile" className="avatar" aria-label="Abrir meu perfil">
               {initials}
             </a>
           </div>
@@ -116,10 +102,10 @@ export function Layout({ children }: { children: ReactNode }) {
         <p className="footer-note">
           Resgatando almas · Seu tempo. Seu ritmo. Seu equilíbrio.
           <br />
-          Práticas complementares de bem-estar · Dados ilustrativos
+          Práticas complementares de bem-estar
         </p>
       </main>
-      {!["assessment", "analysis"].includes(route) && (
+      {!["assessment", "analysis", "admin"].includes(route) && (
         <div className="support">
           <button onClick={() => openModal("whatsapp")}>
             <Icon name="chat" />
@@ -137,7 +123,7 @@ export function Layout({ children }: { children: ReactNode }) {
           .map((item) => (
             <a
               key={item.route}
-              href={`#${item.route}`}
+              href={`/${item.route}`}
               className={route === item.route ? "active" : ""}
               aria-current={route === item.route ? "page" : undefined}
             >

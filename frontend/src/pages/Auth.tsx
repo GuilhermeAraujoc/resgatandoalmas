@@ -29,12 +29,15 @@ export function Auth({ signup = false }: { signup?: boolean }) {
           password: text("password"),
           acceptedTerms: data.get("terms") === "on",
         });
-      else
-        await login({
+      else {
+        const user = await login({
           email: text("email"),
           password: text("password"),
           remember: data.get("remember") === "on",
         });
+        navigate(user.role === "ADMIN" ? "admin" : "welcome");
+        return;
+      }
       navigate("welcome");
     } catch (failure) {
       setError(errorMessage(failure));
@@ -163,7 +166,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
           </form>
           <div className="auth-links">
             {signup ? "Já possui uma conta?" : "Ainda não possui uma conta?"}
-            <a href={signup ? "#login" : "#signup"}>
+            <a href={signup ? "/login" : "/signup"}>
               {signup ? "Entrar" : "Criar conta"}
             </a>
           </div>

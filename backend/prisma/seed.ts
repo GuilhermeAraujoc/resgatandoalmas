@@ -7,13 +7,14 @@ import {
   assessmentScore,
   scenarioForScore,
 } from "../src/domain/energy.js";
+import { initializeContent } from "./content.js";
 import { activities } from "./activities.js";
 
 const DAY = 86_400_000;
 
 async function seedActivities() {
   for (const { id, ...data } of activities)
-    await prisma.activity.upsert({ where: { id }, create: { id, ...data }, update: data });
+    await prisma.activity.upsert({ where: { id }, create: { id, ...data }, update: {} });
   console.log(`Seeded ${activities.length} activities.`);
 }
 
@@ -61,6 +62,7 @@ async function seedDemoUser() {
 try {
   await seedActivities();
   if (!isProduction) await seedDemoUser();
+  await initializeContent();
 } finally {
   await prisma.$disconnect();
 }

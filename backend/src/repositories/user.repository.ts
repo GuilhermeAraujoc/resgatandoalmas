@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.js";
-import type { Prisma } from "../generated/prisma/client.js";
+import type { Prisma } from "../generated/db/client.js";
 
 export const userRepository = {
   findById: (id: string) => prisma.user.findUnique({ where: { id } }),

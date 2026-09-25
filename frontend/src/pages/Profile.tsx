@@ -144,7 +144,7 @@ export function Profile() {
             </Button>
             <a
               className="textlink"
-              href="#login"
+              href="/login"
               onClick={(event) => {
                 event.preventDefault();
                 void logout();
@@ -153,7 +153,7 @@ export function Profile() {
               Sair <Icon name="logout" />
             </a>
           </Card>
-          <a className="textlink" href="#design">
+          <a className="textlink" href="/design">
             Explorar Design System <Icon name="arrow" />
           </a>
         </div>

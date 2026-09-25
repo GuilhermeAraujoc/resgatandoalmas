@@ -13,7 +13,7 @@ import {
 export function Exercises() {
   const { state, startExercise } = useApp();
   const [filter, setFilter] = useState<ExerciseFilter>("Todos");
-  const list = libraryItems(state.scenario).filter((exercise) => {
+  const list = libraryItems(state.scenario, state.protocolCatalog ?? state.catalog).filter((exercise) => {
     const done = state.completed.includes(exercise.id);
     const current = state.currentExerciseId === exercise.id;
     return (

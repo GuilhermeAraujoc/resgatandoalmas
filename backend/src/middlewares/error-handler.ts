@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { HttpError } from "../lib/errors.js";
-import { Prisma } from "../generated/prisma/client.js";
+import { Prisma } from "../generated/db/client.js";
 
 interface ErrorBody {
   error: { message: string; fields?: Record<string, string> };
@@ -33,6 +33,10 @@ export function errorHandler(
     });
     return;
   }
+  if (error && typeof error === "object" && "type" in error && error.type === "entity.too.large") {
+    res.status(413).json({ error: { message: "Conteúdo muito grande. Reduza os textos e tente novamente." } });
+    return;
+  }
   // Malformed JSON body (thrown by express.json()).
   if (error instanceof SyntaxError && "body" in error) {
     res.status(400).json({ error: { message: "JSON inválido." } });
@@ -47,6 +51,10 @@ export function errorHandler(
       .json({ error: { message: "Já existe um cadastro com esses dados." } });
     return;
   }
-  console.error(error);
+  if (error instanceof Prisma.PrismaClientKnownRequestError && ["P2034", "P2025"].includes(error.code)) {
+    res.status(409).json({ error: { message: "Os dados foram alterados. Atualize a página e tente novamente." } });
+    return;
+  }
+  console.error(error instanceof Error ? error.name : "Unknown error");
   res.status(500).json({ error: { message: "Erro interno do servidor." } });
 }

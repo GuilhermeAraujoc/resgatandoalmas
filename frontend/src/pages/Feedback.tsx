@@ -121,7 +121,7 @@ export function Feedback() {
 }
 export function FeedbackResult() {
   const { state, navigate, startExercise } = useApp();
-  const next = protocolItems(state.scenario).find(
+  const next = protocolItems(state.scenario, state.protocolCatalog ?? state.catalog).find(
     (item) => !state.completed.includes(item.id),
   );
   const discomfort = state.feedback.pain === 0;

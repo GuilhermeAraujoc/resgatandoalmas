@@ -1,6 +1,8 @@
 import { AppProvider, useApp } from "./state/AppContext";
 import { Layout } from "./components/Layout";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { ModalHost } from "./components/ModalHost";
+import { Admin } from "./pages/Admin";
 import { Home } from "./pages/Home";
 import { Auth, Welcome } from "./pages/Auth";
 import { Assessment, Analysis, Result } from "./pages/Assessment";
@@ -15,9 +17,11 @@ import { DesignSystem } from "./pages/DesignSystem";
 function Screen() {
   const { route, state } = useApp();
   if (["protocol", "exercise", "feedback", "feedback-result", "result", "analysis"].includes(route) && state.scenario === null) {
-    return <section className="card"><h1>Nenhum protocolo disponível</h1><p>Faça uma avaliação para receber seu acompanhamento.</p><a className="btn" href="#assessment">Fazer avaliação</a></section>;
+    return <section className="card"><h1>Nenhum protocolo disponível</h1><p>Faça uma avaliação para receber seu acompanhamento.</p><a className="btn" href="/assessment">Fazer avaliação</a></section>;
   }
   switch (route) {
+    case "admin":
+      return <Admin />;
     case "home":
       return <Home />;
     case "login":
@@ -60,6 +64,7 @@ function AppContent() {
   return (
     <>
       <div className="ambient" aria-hidden="true" />
+      {(auth || !ready) && <ThemeToggle floating />}
       {!ready ? <main className="narrow" role="status">Carregando seus dados…</main> : auth ? (
         <Screen />
       ) : (

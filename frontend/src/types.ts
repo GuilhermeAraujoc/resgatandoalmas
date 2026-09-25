@@ -14,7 +14,8 @@ export type Route =
   | "progress"
   | "profile"
   | "contact"
-  | "design";
+  | "design"
+  | "admin";
 export type Scenario = "vitality" | "calm";
 export type EnergyLevel =
   | "Muito baixo"
@@ -68,6 +69,9 @@ export interface ProgressSummary {
   streakDays: number;
 }
 export interface AppState {
+  role: "USER" | "ADMIN";
+  catalog: Catalog | null;
+  protocolCatalog: Catalog | null;
   profile: Profile;
   energy: number | null;
   before: number | null;
@@ -91,3 +95,21 @@ export type ModalKind =
   | "forgot"
   | "delete"
   | "sample";
+
+export interface CatalogQuestion {
+  id: string;
+  text: string;
+  topic: string;
+  active: boolean;
+  options: { label: string; score: number; active: boolean }[];
+}
+export interface CatalogData {
+  questions: CatalogQuestion[];
+  exercises: (Exercise & { active: boolean })[];
+  protocols: Record<Scenario, { name: string; description: string; exerciseIds: string[] }>;
+  calmAbove: number;
+}
+export interface Catalog extends CatalogData {
+  id: string;
+  version: number;
+}

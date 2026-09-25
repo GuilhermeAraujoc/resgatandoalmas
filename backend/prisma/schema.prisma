@@ -3,7 +3,7 @@
 
 generator client {
   provider            = "prisma-client"
-  output              = "../src/generated/prisma"
+  output              = "../src/generated/db"
   moduleFormat        = "esm"
   importFileExtension = "js"
 }
@@ -45,11 +45,19 @@ enum Ease {
   MUITO_FACIL
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
+  role            UserRole  @default(USER)
+  blockedAt       DateTime?
+  lastLoginAt     DateTime?
   id              String    @id @default(uuid())
   name            String
   /// Digits only.
-  cpf             String    @unique @db.Char(11)
+  cpf             String?   @unique @db.Char(11)
   email           String    @unique
   passwordHash    String
   /// Digits only.
@@ -111,6 +119,9 @@ model Assessment {
 
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers AssessmentAnswer[]
+  contentReleaseId String?
+  answerSnapshot Json?
+  contentRelease ContentRelease? @relation(fields: [contentReleaseId], references: [id], onDelete: Restrict)
 
   @@index([userId, createdAt])
 }
@@ -120,7 +131,8 @@ model AssessmentAnswer {
   assessmentId  String
   /// Position in the fixed questionnaire (0-based).
   questionIndex Int
-  level         EnergyLevel
+  level         EnergyLevel?
+  selectedOptionIndex Int?
 
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
@@ -133,6 +145,9 @@ model UserActivity {
   userId      String
   activityId  String
   completedAt DateTime @default(now())
+  contentReleaseId String?
+  activitySnapshot Json?
+  contentRelease ContentRelease? @relation(fields: [contentReleaseId], references: [id], onDelete: Restrict)
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   activity Activity  @relation(fields: [activityId], references: [id], onDelete: Restrict)
@@ -159,4 +174,38 @@ model Feedback {
   userActivity UserActivity @relation(fields: [userActivityId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+
+/// A private work in progress, protected by optimistic revision checks.
+model ContentDraft {
+  id        String @id
+  revision  Int @default(1)
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Immutable published definitions: historical records keep this exact version.
+model ContentRelease {
+  id          String @id @default(uuid())
+  version     Int @unique
+  data        Json
+  createdAt   DateTime @default(now())
+  assessments Assessment[]
+  completions UserActivity[]
+}
+
+/// No profile copies, passwords, session tokens, or assessment answers in the audit.
+/// Actor and target IDs deliberately survive account deletion without a user FK.
+model AdminAudit {
+  id        String @id @default(uuid())
+  actorId   String
+  action    String
+  targetId  String?
+  reason    String?
+  fields    String[]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
 }

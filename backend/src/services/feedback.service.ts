@@ -1,4 +1,4 @@
-import { activityRepository } from "../repositories/activity.repository.js";
+import { contentService } from "./content.service.js";
 import { feedbackRepository } from "../repositories/feedback.repository.js";
 import { feedbackEnergy } from "../domain/energy.js";
 import { notFound } from "../lib/errors.js";
@@ -8,12 +8,16 @@ import type { CreateFeedbackInput } from "../validation/feedback.schemas.js";
 export const feedbackService = {
   /** Registers the feedback together with the completed activity it refers to. */
   async create(userId: string, input: CreateFeedbackInput) {
-    if (!(await activityRepository.findById(input.activityId)))
+    const content = await contentService.get(input.contentReleaseId);
+    const exercise = content.exercises.find(item => item.id === input.activityId && item.active);
+    if (!exercise)
       throw notFound("Atividade não encontrada.");
 
     const feedback = await feedbackRepository.createWithCompletion({
       userId,
       activityId: input.activityId,
+      contentReleaseId: content.id,
+      activitySnapshot: exercise,
       energyLevel: input.energyLevel,
       feeling: input.feeling,
       ease: input.ease,
