@@ -2,6 +2,7 @@ export type Route =
   | "home"
   | "login"
   | "signup"
+  | "verificar-email"
   | "welcome"
   | "assessment"
   | "analysis"

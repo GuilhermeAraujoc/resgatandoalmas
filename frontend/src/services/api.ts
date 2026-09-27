@@ -3,11 +3,13 @@ import { config } from "../config";
 /** Error returned by the backend (`{ error: { message, fields } }`) or a network failure. */
 export class ApiError extends Error {
   readonly status: number;
+  readonly code: string | undefined;
   readonly fields: Record<string, string>;
-  constructor(status: number, message: string, fields: Record<string, string> = {}) {
+  constructor(status: number, message: string, fields: Record<string, string> = {}, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
     this.fields = fields;
   }
 }
@@ -43,6 +45,7 @@ export async function request<T>(
       response.status,
       data?.error?.message ?? "Algo deu errado. Tente novamente.",
       data?.error?.fields,
+      data?.error?.code,
     );
   if (data === null) throw new ApiError(response.status, "O servidor retornou uma resposta inválida.");
   return data as T;

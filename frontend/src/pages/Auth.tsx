@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, Logo } from "../components/ui";
-import { errorMessage } from "../services/api";
+import { ResendConfirmation } from "./VerifyEmail";
+import { ApiError, errorMessage } from "../services/api";
 export function Auth({ signup = false }: { signup?: boolean }) {
   const { login, register, navigate, openModal } = useApp();
+  const [confirmationEmail, setConfirmationEmail] = useState("");
+  const [registeredMessage, setRegisteredMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -19,17 +22,19 @@ export function Auth({ signup = false }: { signup?: boolean }) {
       return;
     }
     setError("");
+    setConfirmationEmail("");
     setPending(true);
     try {
-      if (signup)
-        await register({
+      if (signup) {
+        const result = await register({
           name: text("name").trim(),
-          cpf: text("cpf"),
           email: text("email"),
           password: text("password"),
           acceptedTerms: data.get("terms") === "on",
         });
-      else {
+        setRegisteredMessage(result.message);
+        setConfirmationEmail(text("email"));
+      } else {
         const user = await login({
           email: text("email"),
           password: text("password"),
@@ -38,9 +43,10 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         navigate(user.role === "ADMIN" ? "admin" : "welcome");
         return;
       }
-      navigate("welcome");
+
     } catch (failure) {
       setError(errorMessage(failure));
+      if (failure instanceof ApiError && failure.code === "EMAIL_NOT_VERIFIED") setConfirmationEmail(text("email"));
     } finally {
       setPending(false);
     }
@@ -73,28 +79,16 @@ export function Auth({ signup = false }: { signup?: boolean }) {
               ? "Um primeiro passo para cuidar de você."
               : "Entre na sua conta para continuar seu acompanhamento."}
           </p>
-          <form className="form" onSubmit={submit}>
+          {registeredMessage ? <div role="status"><p>{registeredMessage}</p><p>Verifique também a pasta de spam. O link é válido por 1 hora.</p><a className="btn" href="/login">Entrar na plataforma</a></div> : <form className="form" onSubmit={submit}>
             {signup && (
-              <>
-                <Field label="Nome completo">
+              <Field label="Nome completo">
                   <input
                     name="name"
                     placeholder="Como podemos chamar você?"
                     autoComplete="name"
                     required
                   />
-                </Field>
-                <Field label="CPF">
-                  <input
-                    name="cpf"
-                    inputMode="numeric"
-                    maxLength={14}
-                    pattern="[0-9.\-]{11,14}"
-                    placeholder="000.000.000-00"
-                    required
-                  />
-                </Field>
-              </>
+              </Field>
             )}
             <Field label="E-mail">
               <input
@@ -163,7 +157,8 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             <Button type="submit" full disabled={pending}>
               {signup ? "Criar minha conta" : "Entrar"}
             </Button>
-          </form>
+          </form>}
+          {confirmationEmail && <><p>Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada ou solicite um novo link.</p><ResendConfirmation initialEmail={confirmationEmail} /></>}
           <div className="auth-links">
             {signup ? "Já possui uma conta?" : "Ainda não possui uma conta?"}
             <a href={signup ? "/login" : "/signup"}>

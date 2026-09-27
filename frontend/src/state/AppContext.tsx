@@ -23,7 +23,7 @@ import type { AppState, ModalKind, Route, Catalog } from "../types";
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 /** Routes reachable without a session; every other route redirects to login. */
-const publicRoutes: Route[] = ["login", "signup"];
+const publicRoutes: Route[] = ["login", "signup", "verificar-email"];
 
 interface ContextValue {
   state: AppState;
@@ -38,7 +38,7 @@ interface ContextValue {
   startExercise: (id: string) => void;
   authStatus: AuthStatus;
   login: (input: authApi.LoginInput) => Promise<UserDto>;
-  register: (input: authApi.RegisterInput) => Promise<void>;
+  register: (input: authApi.RegisterInput) => ReturnType<typeof authApi.register>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   saveProfile: (input: meApi.ProfileUpdate) => Promise<void>;
@@ -156,11 +156,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const register = useCallback(
     async (input: authApi.RegisterInput) => {
-      sessionVersion.current++;
-      const { user } = await authApi.register(input);
-      await startSession(user);
+      return authApi.register(input);
     },
-    [startSession],
+    [],
   );
   const logout = useCallback(async () => {
     await authApi.logout().catch(() => undefined);

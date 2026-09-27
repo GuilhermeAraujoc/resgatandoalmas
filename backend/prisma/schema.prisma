@@ -59,6 +59,9 @@ model User {
   /// Digits only.
   cpf             String?   @unique @db.Char(11)
   email           String    @unique
+  emailVerified   Boolean?  @default(false) @map("email_verificado")
+  verificationTokenHash String? @map("token_verificacao") @db.VarChar(255)
+  verificationExpiresAt DateTime? @map("token_expira_em") @db.Timestamp(6)
   passwordHash    String
   /// Digits only.
   phone           String?

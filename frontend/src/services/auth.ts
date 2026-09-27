@@ -3,7 +3,6 @@ import type { UserDto } from "./dto";
 
 export interface RegisterInput {
   name: string;
-  cpf: string;
   email: string;
   password: string;
   acceptedTerms: boolean;
@@ -16,9 +15,15 @@ export interface LoginInput {
 }
 
 export const register = (input: RegisterInput) =>
-  request<{ user: UserDto }>("POST", "/auth/register", input);
+  request<{ message: string; emailSent: boolean }>("POST", "/auth/register", input);
 
 export const login = (input: LoginInput) =>
   request<{ user: UserDto }>("POST", "/auth/login", input);
 
 export const logout = () => request<void>("POST", "/auth/logout");
+
+export const verifyEmail = (token: string) =>
+  request<{ message: string }>("GET", `/auth/verificar-email?token=${encodeURIComponent(token)}`);
+
+export const resendConfirmation = (email: string) =>
+  request<{ message: string }>("POST", "/auth/reenviar-confirmacao", { email });

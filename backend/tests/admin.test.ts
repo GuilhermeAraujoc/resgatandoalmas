@@ -40,8 +40,8 @@ before(async () => {
   const { initializeContent } = await import("../prisma/content.js");
   await initializeContent();
   const passwordHash = await bcrypt.hash(password, 4);
-  const admin = await prisma.user.create({ data: { email: "admin@test.invalid", name: "Admin teste", role: "ADMIN", passwordHash, termsAcceptedAt: new Date() } });
-  const user = await prisma.user.create({ data: { email: "user@test.invalid", name: "Usuário teste", cpf: "52998224725", passwordHash, termsAcceptedAt: new Date() } });
+  const admin = await prisma.user.create({ data: { email: "admin@test.invalid", name: "Admin teste", role: "ADMIN", passwordHash, emailVerified: true, termsAcceptedAt: new Date() } });
+  const user = await prisma.user.create({ data: { email: "user@test.invalid", name: "Usuário teste", cpf: "52998224725", passwordHash, emailVerified: true, termsAcceptedAt: new Date() } });
   adminId = admin.id; userId = user.id;
   const { app } = await import("../src/app.js");
   server = await new Promise<Server>(resolve => { const instance = app.listen(0, "127.0.0.1", () => resolve(instance)); });
@@ -67,7 +67,7 @@ test("admin authorization, immutable history, drafts, blocking and confirmed del
     assert.equal((await api("/admin/content", "PATCH", {}, userCookie)).response.status, 403);
     assert.equal((await api("/admin/content", "PATCH", {}, adminCookie, false)).response.status, 403);
     assert.equal((await api("/me", "PATCH", { role: "ADMIN" }, userCookie)).response.status, 400);
-    assert.equal((await api("/auth/register", "POST", { name: "Escalation", email: "attacker@test.invalid", cpf: "11144477735", password, acceptedTerms: true, role: "ADMIN" }, "")).response.status, 400);
+    assert.equal((await api("/auth/register", "POST", { name: "Escalation", email: "attacker@test.invalid", password, acceptedTerms: true, role: "ADMIN" }, "")).response.status, 400);
     await prisma.user.update({ where: { id: adminId }, data: { role: "USER" } });
     assert.equal((await api("/admin/users")).response.status, 403);
     await prisma.user.update({ where: { id: adminId }, data: { role: "ADMIN" } });

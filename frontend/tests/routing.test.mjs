@@ -45,6 +45,9 @@ function setup(path) {
 }
 
 test('direct paths, legacy bookmarks and history navigation', () => {
+  const verification = setup('/verificar-email?token=example');
+  assert.equal(verification.hook.route, 'verificar-email');
+  assert.equal(window.location.search, '?token=example');
   let app = setup('/assessment');
   assert.equal(app.hook.route, 'assessment');
   app.hook.navigate('progress');

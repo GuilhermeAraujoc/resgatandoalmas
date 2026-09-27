@@ -2,6 +2,22 @@ import { prisma } from "../lib/prisma.js";
 import type { Prisma } from "../generated/db/client.js";
 
 export const userRepository = {
+  findByVerificationHash: (verificationTokenHash: string) =>
+    prisma.user.findFirst({ where: { verificationTokenHash } }),
+
+  confirmEmail: (id: string, verificationTokenHash: string) =>
+    prisma.user.updateMany({
+      where: { id, verificationTokenHash, verificationExpiresAt: { gt: new Date() },
+        OR: [{ emailVerified: false }, { emailVerified: null }] },
+      data: { emailVerified: true, verificationTokenHash: null, verificationExpiresAt: null },
+    }),
+
+  renewVerification: (id: string, verificationTokenHash: string, verificationExpiresAt: Date) =>
+    prisma.user.updateMany({
+      where: { id, OR: [{ emailVerified: false }, { emailVerified: null }] },
+      data: { verificationTokenHash, verificationExpiresAt },
+    }),
+
   findById: (id: string) => prisma.user.findUnique({ where: { id } }),
 
   findByEmail: (email: string) => prisma.user.findUnique({ where: { email } }),
