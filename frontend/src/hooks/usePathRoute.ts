@@ -5,6 +5,7 @@ const routes: Route[] = [
   "login",
   "signup",
   "reset-password",
+  "verificar-email",
   "welcome",
   "assessment",
   "analysis",

@@ -14,6 +14,7 @@ import { Progress } from "./pages/Progress";
 import { Profile } from "./pages/Profile";
 import { Contact } from "./pages/Contact";
 import { DesignSystem } from "./pages/DesignSystem";
+import { VerifyEmail } from "./pages/VerifyEmail";
 function Screen() {
   const { route, state } = useApp();
   if (["protocol", "exercise", "feedback", "feedback-result", "result", "analysis"].includes(route) && state.scenario === null) {
@@ -26,6 +27,8 @@ function Screen() {
       return <Home />;
     case "login":
       return <Auth key="login" />;
+    case "verificar-email":
+      return <VerifyEmail />;
     case "signup":
       return <Auth key="signup" signup />;
     case "reset-password":
@@ -61,6 +64,7 @@ function Screen() {
 function AppContent() {
   const { route, toast, authStatus, modal } = useApp();
   const auth = route === "login" || route === "signup" || route === "reset-password";
+  const auth = route === "login" || route === "signup" || route === "verificar-email";
   // Protected screens wait for the session check (anonymous users are redirected to login).
   const ready = auth || authStatus === "authenticated";
   return (

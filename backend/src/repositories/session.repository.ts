@@ -6,7 +6,7 @@ export const sessionRepository = {
 
   findActive: (tokenHash: string) =>
     prisma.session.findFirst({
-      where: { tokenHash, expiresAt: { gt: new Date() }, user: { blockedAt: null } },
+      where: { tokenHash, expiresAt: { gt: new Date() }, user: { blockedAt: null, emailVerified: true } },
       select: { id: true, userId: true, user: { select: { role: true } } },
     }),
 

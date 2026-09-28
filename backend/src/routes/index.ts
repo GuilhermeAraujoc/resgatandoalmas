@@ -16,6 +16,8 @@ routes.get("/", (_req, res) => {
 
 routes.post("/auth/register", authRateLimit, authController.register);
 routes.post("/auth/login", authRateLimit, authController.login);
+routes.get("/auth/verificar-email", authRateLimit, authController.verifyEmail);
+routes.post("/auth/reenviar-confirmacao", authRateLimit, authController.resendConfirmation);
 routes.post("/auth/logout", authController.logout);
 routes.post("/auth/forgot-password", authRateLimit, authController.forgotPassword);
 routes.post("/auth/reset-password", authRateLimit, authController.resetPassword);

@@ -4,7 +4,7 @@ import { HttpError } from "../lib/errors.js";
 import { Prisma } from "../generated/db/client.js";
 
 interface ErrorBody {
-  error: { message: string; fields?: Record<string, string> };
+  error: { message: string; code?: string; fields?: Record<string, string> };
 }
 
 export function notFoundHandler(_req: Request, res: Response<ErrorBody>) {
@@ -18,7 +18,7 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   if (error instanceof HttpError) {
-    res.status(error.status).json({ error: { message: error.message } });
+    res.status(error.status).json({ error: { message: error.message, ...(error.code ? { code: error.code } : {}) } });
     return;
   }
   if (error instanceof ZodError) {
