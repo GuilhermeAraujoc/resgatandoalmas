@@ -25,6 +25,9 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+    # E-mail settings (SMTP_*, MAIL_FROM, APP_URL) come from backend/.env.
+    # To catch mail locally instead, set SMTP_HOST=mailpit and SMTP_PORT=1025 there
+    # (inbox at http://localhost:8025); without SMTP_HOST, mail is only logged.
     environment:
       NODE_ENV: development
       DB_HOST: postgres
@@ -39,6 +42,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: resgatando_almas_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
   postgres:
     image: postgres:17

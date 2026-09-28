@@ -4,7 +4,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { ModalHost } from "./components/ModalHost";
 import { Admin } from "./pages/Admin";
 import { Home } from "./pages/Home";
-import { Auth, Welcome } from "./pages/Auth";
+import { Auth, ResetPassword, Welcome } from "./pages/Auth";
 import { Assessment, Analysis, Result } from "./pages/Assessment";
 import { Protocol } from "./pages/Protocol";
 import { Exercises } from "./pages/Exercises";
@@ -28,6 +28,8 @@ function Screen() {
       return <Auth key="login" />;
     case "signup":
       return <Auth key="signup" signup />;
+    case "reset-password":
+      return <ResetPassword />;
     case "welcome":
       return <Welcome />;
     case "assessment":
@@ -58,7 +60,7 @@ function Screen() {
 }
 function AppContent() {
   const { route, toast, authStatus, modal } = useApp();
-  const auth = route === "login" || route === "signup";
+  const auth = route === "login" || route === "signup" || route === "reset-password";
   // Protected screens wait for the session check (anonymous users are redirected to login).
   const ready = auth || authStatus === "authenticated";
   return (

@@ -19,3 +19,15 @@ export const loginSchema = z.strictObject({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const forgotPasswordSchema = z.strictObject({
+  email: emailField,
+});
+
+export const resetPasswordSchema = z.strictObject({
+  token: z.string().min(1, "Link de redefinição inválido.").max(200),
+  password: newPasswordField,
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
