@@ -23,6 +23,7 @@ import type { AppState, ModalKind, Route, Catalog } from "../types";
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 /** Routes reachable without a session; every other route redirects to login. */
+const publicRoutes: Route[] = ["login", "signup", "reset-password"];
 const publicRoutes: Route[] = ["login", "signup", "verificar-email"];
 
 interface ContextValue {
@@ -40,6 +41,7 @@ interface ContextValue {
   login: (input: authApi.LoginInput) => Promise<UserDto>;
   register: (input: authApi.RegisterInput) => ReturnType<typeof authApi.register>;
   logout: () => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
   saveProfile: (input: meApi.ProfileUpdate) => Promise<void>;
   submitAssessment: () => Promise<void>;
@@ -165,6 +167,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     endSession();
     navigate("login");
   }, [endSession, navigate]);
+  /** The server ends every session of the account, including this one. */
+  const resetPassword = useCallback(
+    async (token: string, password: string) => {
+      await authApi.resetPassword(token, password);
+      endSession();
+    },
+    [endSession],
+  );
   const deleteAccount = useCallback(async () => {
     await authed(meApi.deleteMe);
     endSession();
@@ -216,6 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        resetPassword,
         deleteAccount,
         saveProfile,
         submitAssessment,

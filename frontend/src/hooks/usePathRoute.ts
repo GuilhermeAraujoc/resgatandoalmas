@@ -4,6 +4,7 @@ const routes: Route[] = [
   "home",
   "login",
   "signup",
+  "reset-password",
   "verificar-email",
   "welcome",
   "assessment",

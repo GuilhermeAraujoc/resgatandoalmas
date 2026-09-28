@@ -1,6 +1,12 @@
 import type { Request, Response } from "express";
 import { authService } from "../services/auth.service.js";
-import { loginSchema, registerSchema, resendConfirmationSchema } from "../validation/auth.schemas.js";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+  resendConfirmationSchema
+} from "../validation/auth.schemas.js";
 import {
   clearSessionCookie,
   readSessionCookie,
@@ -34,6 +40,21 @@ export const authController = {
 
   async logout(req: Request, res: Response) {
     await authService.logout(readSessionCookie(req));
+    clearSessionCookie(res);
+    res.status(204).end();
+  },
+
+  /** Answers before the lookup/e-mail finish, so timing does not reveal registered e-mails. */
+  async forgotPassword(req: Request, res: Response) {
+    const input = forgotPasswordSchema.parse(req.body);
+    authService
+      .requestPasswordReset(input)
+      .catch((error) => console.error("Falha ao enviar e-mail de redefinição de senha:", error));
+    res.status(204).end();
+  },
+
+  async resetPassword(req: Request, res: Response) {
+    await authService.resetPassword(resetPasswordSchema.parse(req.body));
     clearSessionCookie(res);
     res.status(204).end();
   },

@@ -23,6 +23,17 @@ const schema = z.object({
     }, "Invalid IANA timezone"),
   /** Express "trust proxy" value, e.g. "uniquelocal" behind the Vite dev proxy. */
   TRUST_PROXY: z.string().optional(),
+  /** Public frontend origin, used to build links sent by e-mail. */
+  APP_URL: z.url().default("http://localhost:5173"),
+  /** Without SMTP_HOST, e-mails are printed to the console instead of sent. */
+  SMTP_HOST: z.string().trim().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  /** true for implicit TLS (port 465); otherwise STARTTLS is used when offered. */
+  SMTP_SECURE: z.stringbool().default(false),
+  SMTP_USER: z.string().trim().optional(),
+  /** Gmail shows app passwords in groups ("abcd efgh …"); the spaces are not part of it. */
+  SMTP_PASS: z.string().transform((value) => value.replace(/\s/g, "")).optional(),
+  MAIL_FROM: z.string().default("Resgatando Almas <nao-responda@resgatandoalmas.com.br>"),
 });
 
 export const env = schema.parse(process.env);

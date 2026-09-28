@@ -117,6 +117,12 @@ export function ModalHost() {
             complete(event, modal === "forgot" ? "/auth/forgot-password" : "/auth/change-password")
           }
         >
+          {modal === "forgot" && (
+            <p className="small muted">
+              Informe o e-mail da sua conta. Enviaremos um link para você criar
+              uma nova senha.
+            </p>
+          )}
           {modal === "password" && <Field label="Senha atual"><input name="currentPassword" type="password" autoComplete="current-password" required /></Field>}
           <Field label={modal === "forgot" ? "E-mail" : "Nova senha"}>
             <input
@@ -124,6 +130,8 @@ export function ModalHost() {
               name={modal === "forgot" ? "email" : "newPassword"}
               type={modal === "forgot" ? "email" : "password"}
               minLength={modal === "password" ? 6 : undefined}
+              autoComplete={modal === "forgot" ? "email" : "new-password"}
+              placeholder={modal === "forgot" ? "seu@email.com" : undefined}
             />
           </Field>
           <Button type="submit" disabled={busy}>Continuar</Button>

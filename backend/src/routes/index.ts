@@ -19,6 +19,8 @@ routes.post("/auth/login", authRateLimit, authController.login);
 routes.get("/auth/verificar-email", authRateLimit, authController.verifyEmail);
 routes.post("/auth/reenviar-confirmacao", authRateLimit, authController.resendConfirmation);
 routes.post("/auth/logout", authController.logout);
+routes.post("/auth/forgot-password", authRateLimit, authController.forgotPassword);
+routes.post("/auth/reset-password", authRateLimit, authController.resetPassword);
 
 routes.get("/me", authenticate, meController.show);
 routes.patch("/me", authenticate, meController.update);

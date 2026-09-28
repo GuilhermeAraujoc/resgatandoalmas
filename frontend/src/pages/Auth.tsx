@@ -1,6 +1,26 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
 import { Button, Card, Field, Icon, Logo } from "../components/ui";
+import { errorMessage } from "../services/api";
+function AuthSide() {
+  return (
+    <section className="auth-side">
+      <Logo />
+      <div className="quote">
+        <small>UM ENCONTRO COM VOCÊ</small>
+        <h1>Seu equilíbrio começa com um pequeno cuidado.</h1>
+        <p>
+          Um espaço para escutar seu corpo, acolher seu momento e encontrar o
+          seu ritmo.
+        </p>
+        <div className="rings">
+          <Icon name="flower" />
+        </div>
+      </div>
+      <small>SEU TEMPO. SEU RITMO. SEU EQUILÍBRIO.</small>
+    </section>
+  );
+}
 import { ResendConfirmation } from "./VerifyEmail";
 import { ApiError, errorMessage } from "../services/api";
 export function Auth({ signup = false }: { signup?: boolean }) {
@@ -53,21 +73,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
   };
   return (
     <div className="auth">
-      <section className="auth-side">
-        <Logo />
-        <div className="quote">
-          <small>UM ENCONTRO COM VOCÊ</small>
-          <h1>Seu equilíbrio começa com um pequeno cuidado.</h1>
-          <p>
-            Um espaço para escutar seu corpo, acolher seu momento e encontrar o
-            seu ritmo.
-          </p>
-          <div className="rings">
-            <Icon name="flower" />
-          </div>
-        </div>
-        <small>SEU TEMPO. SEU RITMO. SEU EQUILÍBRIO.</small>
-      </section>
+      <AuthSide />
       <section className="auth-form">
         <div>
           <span className="demo">PROTÓTIPO · DADOS FICTÍCIOS</span>
@@ -170,6 +176,102 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             <br />
             Nunca a compartilhe com outras pessoas.
           </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+/** Target of the e-mailed link: /reset-password?token=… */
+export function ResetPassword() {
+  const { resetPassword, navigate, notify, openModal } = useApp();
+  const [token] = useState(
+    () => new URLSearchParams(window.location.search).get("token") ?? "",
+  );
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  // Keep the single-use token out of the address bar and browser history.
+  useEffect(() => {
+    if (window.location.search)
+      window.history.replaceState(null, "", window.location.pathname);
+  }, []);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const password = String(data.get("password") ?? "");
+    if (password !== String(data.get("confirm") ?? "")) {
+      setError("As senhas não coincidem. Confira e tente novamente.");
+      return;
+    }
+    setError("");
+    setPending(true);
+    try {
+      await resetPassword(token, password);
+      notify("Senha redefinida! Entre com sua nova senha.");
+      navigate("login");
+    } catch (failure) {
+      setError(errorMessage(failure));
+      setPending(false);
+    }
+  };
+  return (
+    <div className="auth">
+      <AuthSide />
+      <section className="auth-form">
+        <div>
+          <h1>Criar nova senha</h1>
+          {token ? (
+            <>
+              <p className="welcome-text">
+                Escolha uma nova senha para acessar sua conta. Por segurança,
+                você sairá de todos os dispositivos conectados.
+              </p>
+              <form className="form" onSubmit={submit}>
+                <Field label="Nova senha">
+                  <input
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={6}
+                    maxLength={72}
+                    placeholder="Mínimo de 6 caracteres"
+                    required
+                  />
+                </Field>
+                <Field label="Confirmar nova senha">
+                  <input
+                    name="confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={6}
+                    maxLength={72}
+                    placeholder="Repita sua nova senha"
+                    required
+                  />
+                </Field>
+                {error && (
+                  <p role="alert" className="form-error">
+                    {error}
+                  </p>
+                )}
+                <Button type="submit" full disabled={pending}>
+                  Salvar nova senha
+                </Button>
+              </form>
+            </>
+          ) : (
+            <>
+              <p className="welcome-text">
+                Este link de redefinição é inválido ou está incompleto.
+              </p>
+              <Button full onClick={() => openModal("forgot")}>
+                Solicitar novo link
+              </Button>
+            </>
+          )}
+          <div className="auth-links">
+            Lembrou sua senha?
+            <a href="/login">Entrar</a>
+          </div>
         </div>
       </section>
     </div>
