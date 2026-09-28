@@ -28,8 +28,8 @@ const schema = z.object({
   /** Without SMTP_HOST, e-mails are printed to the console instead of sent. */
   SMTP_HOST: z.string().trim().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
-  /** true for implicit TLS (port 465); otherwise STARTTLS is used when offered. */
-  SMTP_SECURE: z.stringbool().default(false),
+  /** Implicit TLS; defaults to true on port 465, otherwise STARTTLS is used when offered. */
+  SMTP_SECURE: z.stringbool().optional(),
   SMTP_USER: z.string().trim().optional(),
   /** Gmail shows app passwords in groups ("abcd efgh …"); the spaces are not part of it. */
   SMTP_PASS: z.string().transform((value) => value.replace(/\s/g, "")).optional(),

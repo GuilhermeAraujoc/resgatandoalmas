@@ -23,8 +23,7 @@ import type { AppState, ModalKind, Route, Catalog } from "../types";
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 /** Routes reachable without a session; every other route redirects to login. */
-const publicRoutes: Route[] = ["login", "signup", "reset-password"];
-const publicRoutes: Route[] = ["login", "signup", "verificar-email"];
+const publicRoutes: Route[] = ["login", "signup", "reset-password", "verificar-email"];
 
 interface ContextValue {
   state: AppState;

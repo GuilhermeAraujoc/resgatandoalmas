@@ -7,6 +7,7 @@ import {
   type ButtonHTMLAttributes,
   type CSSProperties,
   type HTMLAttributes,
+  type InputHTMLAttributes,
   type ReactNode,
   type ReactElement,
 } from "react";
@@ -301,6 +302,29 @@ export function Field({
       <label htmlFor={id}>{label}</label>
       {cloneElement(children, { id })}
     </div>
+  );
+}
+/** Password field with a show/hide toggle; use inside `Field` like a plain input. */
+export function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="password-input">
+      <input {...props} type={visible ? "text" : "password"} />
+      <button
+        type="button"
+        onClick={() => setVisible((value) => !value)}
+        aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+        aria-pressed={visible}
+        aria-controls={props.id}
+        title={visible ? "Ocultar senha" : "Mostrar senha"}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+          <circle cx="12" cy="12" r="3" />
+          {visible && <path d="M4 4l16 16" />}
+        </svg>
+      </button>
+    </span>
   );
 }
 export function Notice({ children }: { children: ReactNode }) {

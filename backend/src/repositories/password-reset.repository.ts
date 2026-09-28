@@ -30,7 +30,11 @@ export const passwordResetRepository = {
         data: { usedAt: new Date() },
       });
       if (count === 0) return false;
-      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      // The link arrived in the user's inbox, so it also confirms the address.
+      await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash, emailVerified: true, verificationTokenHash: null, verificationExpiresAt: null },
+      });
       await tx.session.deleteMany({ where: { userId } });
       await tx.passwordReset.deleteMany({ where: { userId, id: { not: id } } });
       return true;

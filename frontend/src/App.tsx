@@ -63,8 +63,7 @@ function Screen() {
 }
 function AppContent() {
   const { route, toast, authStatus, modal } = useApp();
-  const auth = route === "login" || route === "signup" || route === "reset-password";
-  const auth = route === "login" || route === "signup" || route === "verificar-email";
+  const auth = route === "login" || route === "signup" || route === "reset-password" || route === "verificar-email";
   // Protected screens wait for the session check (anonymous users are redirected to login).
   const ready = auth || authStatus === "authenticated";
   return (

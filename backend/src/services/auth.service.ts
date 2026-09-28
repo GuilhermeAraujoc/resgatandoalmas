@@ -1,13 +1,12 @@
-import crypto, { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { userRepository } from "../repositories/user.repository.js";
 import { sessionRepository } from "../repositories/session.repository.js";
 import { passwordResetRepository } from "../repositories/password-reset.repository.js";
-import { badRequest, conflict, unauthorized } from "../lib/errors.js";
+import { HttpError, badRequest, conflict, unauthorized } from "../lib/errors.js";
 import { sendMail } from "../lib/mailer.js";
 import { env } from "../config/env.js";
 import { enviarEmailConfirmacao } from "./email.service.js";
-import { HttpError, conflict, unauthorized } from "../lib/errors.js";
 import { toUserDto } from "./user.service.js";
 import type {
   ForgotPasswordInput,
@@ -75,8 +74,10 @@ function passwordResetMail(name: string, link: string) {
 <p>O link é válido por 1 hora. Se o botão não funcionar, copie e cole no navegador:<br>${escapeHtml(link)}</p>
 <p>Se você não fez este pedido, ignore este e-mail: sua senha continua a mesma.</p>`,
   };
+}
+
 function verificationToken() {
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = randomBytes(32).toString("hex");
   return { token, verificationTokenHash: hashToken(token), verificationExpiresAt: new Date(Date.now() + HOUR) };
 }
 

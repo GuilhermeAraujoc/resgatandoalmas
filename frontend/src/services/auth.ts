@@ -27,6 +27,7 @@ export const forgotPassword = (email: string) =>
 
 export const resetPassword = (token: string, password: string) =>
   request<void>("POST", "/auth/reset-password", { token, password });
+
 export const verifyEmail = (token: string) =>
   request<{ message: string }>("GET", `/auth/verificar-email?token=${encodeURIComponent(token)}`);
 

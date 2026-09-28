@@ -19,8 +19,8 @@ try {
     }
     await prisma.$transaction(async tx => {
       const user = existing
-        ? await tx.user.update({ where: { id: existing.id }, data: { role: "ADMIN", blockedAt: null } })
-        : await tx.user.create({ data: { email, name: "Administrador", role: "ADMIN", passwordHash: passwordHash!, termsAcceptedAt: new Date() } });
+        ? await tx.user.update({ where: { id: existing.id }, data: { role: "ADMIN", blockedAt: null, emailVerified: true } })
+        : await tx.user.create({ data: { email, name: "Administrador", role: "ADMIN", passwordHash: passwordHash!, emailVerified: true, termsAcceptedAt: new Date() } });
       await tx.session.deleteMany({ where: { userId: user.id } });
       await tx.adminAudit.create({ data: { actorId: "system:operator", action: "ADMIN_BOOTSTRAPPED", targetId: user.id, fields: ["role"] } });
     });

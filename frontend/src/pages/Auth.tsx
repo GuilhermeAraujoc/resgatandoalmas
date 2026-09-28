@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "../state/AppContext";
-import { Button, Card, Field, Icon, Logo } from "../components/ui";
-import { errorMessage } from "../services/api";
+import { Button, Card, Field, Icon, Logo, PasswordInput } from "../components/ui";
+import { ApiError, errorMessage } from "../services/api";
+import { ResendConfirmation } from "./VerifyEmail";
 function AuthSide() {
   return (
     <section className="auth-side">
@@ -21,8 +22,6 @@ function AuthSide() {
     </section>
   );
 }
-import { ResendConfirmation } from "./VerifyEmail";
-import { ApiError, errorMessage } from "../services/api";
 export function Auth({ signup = false }: { signup?: boolean }) {
   const { login, register, navigate, openModal } = useApp();
   const [confirmationEmail, setConfirmationEmail] = useState("");
@@ -106,9 +105,8 @@ export function Auth({ signup = false }: { signup?: boolean }) {
               />
             </Field>
             <Field label="Senha">
-              <input
+              <PasswordInput
                 name="password"
-                type="password"
                 autoComplete={signup ? "new-password" : "current-password"}
                 minLength={6}
                 placeholder="Mínimo de 6 caracteres"
@@ -118,9 +116,8 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             {signup ? (
               <>
                 <Field label="Confirmar senha">
-                  <input
+                  <PasswordInput
                     name="confirm"
-                    type="password"
                     autoComplete="new-password"
                     minLength={6}
                     placeholder="Repita sua senha"
@@ -227,9 +224,8 @@ export function ResetPassword() {
               </p>
               <form className="form" onSubmit={submit}>
                 <Field label="Nova senha">
-                  <input
+                  <PasswordInput
                     name="password"
-                    type="password"
                     autoComplete="new-password"
                     minLength={6}
                     maxLength={72}
@@ -238,9 +234,8 @@ export function ResetPassword() {
                   />
                 </Field>
                 <Field label="Confirmar nova senha">
-                  <input
+                  <PasswordInput
                     name="confirm"
-                    type="password"
                     autoComplete="new-password"
                     minLength={6}
                     maxLength={72}

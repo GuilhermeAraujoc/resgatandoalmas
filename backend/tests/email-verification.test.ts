@@ -11,7 +11,7 @@ test("registration, confirmation, resend and login respect email verification", 
   process.env.SMTP_PORT = "587";
   process.env.SMTP_USER = "sender@test.invalid";
   process.env.SMTP_PASS = "test-only";
-  process.env.FRONTEND_URL = "http://localhost:5173";
+  process.env.APP_URL = "http://localhost:5173";
   let mail = "";
   let failMail = false;
   t.mock.method(nodemailer, "createTransport", () => ({ sendMail: async (options: { text: string }) => {

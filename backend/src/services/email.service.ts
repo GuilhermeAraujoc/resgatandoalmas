@@ -1,34 +1,18 @@
-import nodemailer from "nodemailer";
-import "../config/env.js";
+import { env } from "../config/env.js";
+import { sendMail } from "../lib/mailer.js";
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: Number(process.env.SMTP_PORT) === 465,
-  connectionTimeout: 4000,
-  greetingTimeout: 4000,
-  socketTimeout: 8000,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 export async function enviarEmailConfirmacao(
   email: string,
   nome: string,
   token: string
 ) {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.FRONTEND_URL)
-    throw new Error("Configuração de e-mail incompleta.");
-  const url = new URL("/verificar-email", process.env.FRONTEND_URL);
+  const url = new URL("/verificar-email", env.APP_URL);
   url.searchParams.set("token", token);
   const link = escapeHtml(url.toString());
 
-  await transporter.sendMail({
-    from: `"Resgatando Almas" <${process.env.SMTP_USER}>`,
+  await sendMail({
     to: email,
     subject: "Confirme seu endereço de e-mail",
 

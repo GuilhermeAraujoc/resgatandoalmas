@@ -38,6 +38,7 @@ async function seedDemoUser() {
       email,
       cpf: "52998224725", // valid test CPF
       passwordHash: await bcrypt.hash("demo123", 12),
+      emailVerified: true,
       termsAcceptedAt: new Date(),
     },
   });
